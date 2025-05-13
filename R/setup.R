@@ -11,6 +11,7 @@
 
 library(pacman)
 pacman::p_load(sf,
+               ISOweek,
                tidyverse,
                INLA)
 
@@ -28,7 +29,7 @@ path_script =
 # source functions --------------------------------------------------------
 
 all_fns = 
-  dir("R/", pattern="fn", full.names = TRUE) %>% 
+  dir("R/", pattern="bo", full.names = TRUE) %>% 
   file.path()
 lapply(all_fns, function(x) source(x,echo=FALSE))
 
