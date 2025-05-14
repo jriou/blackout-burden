@@ -30,10 +30,13 @@ bo_000_load = function() {
     tidyr::separate(nuts2, into=c("nuts2_code","nuts2_name"),sep=":") %>% 
     dplyr::mutate(nuts2_code=ifelse(nuts2_code=="1B: Pen\xednsula de Set\xfabal","1B",nuts2_code),
                   nuts2_name=ifelse(nuts2_code=="1B","Península de Setúbal",nuts2_name)) %>% 
+    dplyr::mutate(country="Portugal") %>% 
+    dplyr::relocate(country) %>% 
     # Dates
     dplyr::mutate(dm = sprintf("%02d-%02d", day(date), month(date)),
-                  dm_index = yday(date)) %>% 
-    dplyr::relocate(year,dm_index,date,dm) %>% 
+                  dm_index = yday(date),
+                  isoweek=substr(ISOweek::date2ISOweek(date),1,8)) %>% 
+    dplyr::relocate(year,dm_index,date,dm,isoweek) %>% 
     # Sex
     dplyr::mutate(sex=as.factor(sex)) %>% 
     # Age
@@ -42,7 +45,7 @@ bo_000_load = function() {
                                       age_group=="70-74 years" ~ "70-74",
                                       age_group=="75-79 years" ~ "75-79",
                                       age_group=="80-84 years" ~ "80-84",
-                                      age_group=="85 or more years" ~ "85+"))
+                                      age_group=="85 or more years" ~ "85+")) 
   
   ## Checks
   if(FALSE) {
@@ -52,7 +55,13 @@ bo_000_load = function() {
       facet_grid(age_group~year)
   }
   
-  saveRDS(pt_deaths1, file = "output/deaths21_25.rds")
+  # Spain
+  es_deaths1 = NULL
+  
+  # Join
+  dat_out = dplyr::bind_rows(pt_deaths1,es_deaths1)
+  return(dat_out)
+
 }
 
-
+saveRDS(pt_deaths1, file = "output/deaths21_25.rds")
