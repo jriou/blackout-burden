@@ -24,6 +24,7 @@ dat <- dat %>%
   mutate(id.spaceyear = paste0(year, NUTSII) %>% as.factor() %>% as.numeric())
 
 dat$xweek <- as.numeric(dat$week)
+dat$id.day <- lubridate::wday(dat$date)
 
 # set the iid priors
 hyper.iid <- list(theta = list(prior="pc.prec", param=c(1, 0.1)))
@@ -99,13 +100,16 @@ dat_cv_list <- apply(
   function(X) DataCrossVal(ageg = X[1], sexg =X[2])
 )
 
+
 # Define the INLA formulas
-# weekend vs weekday
+
 form_1 <- 
   death_mod ~ 
   1 + 
   offset(log(pop)) + 
   factor(hol) + 
+  # day of the week
+  f(id.day, model='iid', constr = TRUE, hyper = hyper.iid) + 
   # seasonality
   f(yweek, model='rw2', constr = TRUE, cyclic = TRUE, hyper = hyper.iid) + 
   # long-term trends
@@ -121,6 +125,8 @@ form_2 <-
   offset(log(pop)) + 
   factor(hol) + 
   xweek + 
+  # day of the week
+  f(id.day, model='iid', constr = TRUE, hyper = hyper.iid) + 
   # seasonality
   f(yweek, model='rw2', constr = TRUE, cyclic = TRUE, hyper = hyper.iid) + 
   # long-term trends
@@ -130,30 +136,13 @@ form_2 <-
   # space
   f(id.space, model='iid', constr = TRUE, hyper = hyper.iid) 
 
-
-# form_2 <- 
-#   death_mod ~ 
-#   1 + 
-#   offset(log(pop)) + 
-#   factor(hol) + 
-#   xweek + 
-#   # seasonality
-#   f(yweek, model='rw2', constr = TRUE, cyclic = TRUE, hyper = hyper.iid) + 
-#   # long-term trends
-#   f(week, model='iid', constr = TRUE, hyper = hyper.iid) + 
-#   # temperature effect
-#   f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) + 
-#   # space
-#   f(id.space, model='iid', constr = TRUE, hyper = hyper.iid) +
-#   # space*year interaction
-#   f(id.spaceyear, model='iid', constr = TRUE, hyper = hyper.iid)
-
-
 form_3 <- 
   death_mod ~ 
   1 + 
   offset(log(pop)) + 
   factor(hol) + 
+  # day of the week
+  f(id.day, model='iid', constr = TRUE, hyper = hyper.iid) + 
   # seasonality
   f(yweek, model='rw2', constr = TRUE, cyclic = TRUE, hyper = hyper.iid) + 
   # long-term trends
@@ -171,23 +160,17 @@ res_form_3 <- list()
 t_0 <- Sys.time()
 for(i in 1:length(dat_cv_list)){
   print(i)
-  # res_form_1[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_1)
-  # res_form_2[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_2)
+  res_form_1[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_1)
+  res_form_2[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_2)
   res_form_3[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_3)
 }
 t_1 <- Sys.time()
-t_1 - t_0
+t_1 - t_0 # 2.5h
 
 
 saveRDS(res_form_1, file = "output/CV_FORM1.rds")
 saveRDS(res_form_2, file = "output/CV_FORM2.rds")
 saveRDS(res_form_3, file = "output/CV_FORM3.rds")
-
-# t_0 <- Sys.time()
-# tmp <- RunINLA(form = form_1, dat_cv = dat_cv_list[[i]][[1]], n_sam = 200)
-# t_1 <- Sys.time()
-# t_1 - t_0 # ~ 20 seconds for 1, I need to run 3*12*14 (14 is the number of the first weeks in 2025 until end of March)
-# # I expect ~ 3 hours
 
 
 rm(list = ls())
