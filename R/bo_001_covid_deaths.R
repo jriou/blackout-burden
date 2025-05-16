@@ -1,4 +1,4 @@
-bo_001_covid_deaths = function(dat_in, threshold) {
+bo_001_covid_deaths = function(dat_in, threshold = 100) {
   
   # OWID death data ()
   if(controls$update_data) {
@@ -24,7 +24,8 @@ bo_001_covid_deaths = function(dat_in, threshold) {
                      .groups="drop") %>% 
     dplyr::mutate(OWID_covid_deaths=if_else(OWID_covid_deaths>threshold,1,0))
     
-  # Left-join on daily all-cause deaths
-  dat_out = dat_in %>% 
-    dplyr::left_join(dd_2,by = join_by(country,isoweek))
+  return(dd_2)
 }
+
+setwd("C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/")
+saveRDS(dd_2, file = "output/COVID_DEATHS.rds")
