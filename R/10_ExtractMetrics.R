@@ -6,9 +6,10 @@
 #-------------------------------------------------------------------------------
 
 library(tidyverse)
+library(patchwork)
 
 # set path
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
 
 res_form_1 <- readRDS("output/CV_FORM1.rds")
@@ -147,13 +148,23 @@ rbind(
   
 ) -> bias_sum_tab
 bias_sum_tab$mod2 <- factor(bias_sum_tab$mod, labels = paste0("M", 1:3)) 
-  
+bias_sum_tab$sex <-
+  factor(bias_sum_tab$sex, 
+         levels = c("male", "female"), 
+         labels = c("Males", "Females"))
+
 ggplot(data = bias_sum_tab) + 
   geom_point(aes(x=mod2, y=`50%`)) + 
   geom_errorbar(aes(x=mod2, ymin = `2.5%`, ymax = `97.5%`), width = 0.5) + 
   facet_grid(cols = vars(age), rows = vars(sex)) + 
   geom_hline(yintercept = 0, lty = 2, col = "red") + 
-  theme_bw() + ylab("") + xlab("")
+  theme_bw() + ylab("") + xlab("") + 
+  ggtitle("A. Bias") + 
+  theme(
+    strip.text = element_text(margin = margin(t = 1, r = 1, b = 1, l = 1)),
+    strip.background = element_rect(fill = NA, color = "black"), 
+    plot.title = element_text(size = 10, face = "bold")
+  ) -> p1
 
 
 
@@ -196,14 +207,90 @@ rbind(
 ) -> coverage_res
 
 coverage_res$mod2 <- factor(coverage_res$mod, labels = paste0("M", 1:3)) 
+coverage_res$sex <-
+  factor(coverage_res$sex, 
+         levels = c("male", "female"), 
+         labels = c("Males", "Females"))
 
 ggplot(data = coverage_res) + 
   geom_boxplot(aes(x=mod2, y=coverage)) +
   facet_grid(cols = vars(age), rows = vars(sex)) + 
   geom_hline(yintercept = 0.95, lty = 2, col = "red") + 
-  theme_bw() + ylab("") + xlab("")
+  theme_bw() + ylab("") + xlab("") + 
+  ggtitle("B. Coverage probability") + 
+  theme(
+    strip.text = element_text(margin = margin(t = 1, r = 1, b = 1, l = 1)),
+    strip.background = element_rect(fill = NA, color = "black"), 
+    plot.title = element_text(size = 10, face = "bold")
+  ) -> p2
 
 
 ##
 ## And the MSE
+
+
+MSE <-function(form_res){
+  lapply(form_res, function(X){
+    lapply(X, function(Z) Z$space_date$mse %>% apply(., 2, sum)) %>% 
+      do.call(cbind, .) %>% apply(., 1, sum) %>% 
+      quantile(., probs = c(0.5, 0.025, 0.975))
+  }
+  ) %>% return()
+}
+
+
+rbind(
+  MSE(cv_form_1) %>% 
+    do.call(rbind, .) %>% 
+    as.data.frame() %>% 
+    sqrt() %>% 
+    mutate(mod = "Model 1", 
+           age = sapply(str_split(nams, pattern = "_"), function(X) X[1]), 
+           sex = sapply(str_split(nams, pattern = "_"), function(X) X[2])),
+  
+  MSE(cv_form_2) %>% 
+    do.call(rbind, .) %>% 
+    as.data.frame() %>% 
+    sqrt() %>% 
+    mutate(mod = "Model 2", 
+           age = sapply(str_split(nams, pattern = "_"), function(X) X[1]), 
+           sex = sapply(str_split(nams, pattern = "_"), function(X) X[2])),
+  
+  MSE(cv_form_3) %>% 
+    do.call(rbind, .) %>% 
+    as.data.frame() %>% 
+    sqrt() %>% 
+    mutate(mod = "Model 3", 
+           age = sapply(str_split(nams, pattern = "_"), function(X) X[1]), 
+           sex = sapply(str_split(nams, pattern = "_"), function(X) X[2]))
+  
+) -> mse_tab
+mse_tab$mod2 <- factor(bias_sum_tab$mod, labels = paste0("M", 1:3)) 
+mse_tab$sex <-
+  factor(mse_tab$sex, 
+         levels = c("male", "female"), 
+         labels = c("Males", "Females"))
+
+ggplot(data = mse_tab) + 
+  geom_point(aes(x=mod2, y=`50%`)) + 
+  geom_errorbar(aes(x=mod2, ymin = `2.5%`, ymax = `97.5%`), width = 0.5) + 
+  facet_grid(cols = vars(age), rows = vars(sex)) + 
+  theme_bw() + ylab("") + xlab("") + 
+  ggtitle("C. Square root of MSE") + 
+  theme(
+    strip.text = element_text(margin = margin(t = 1, r = 1, b = 1, l = 1)),
+    strip.background = element_rect(fill = NA, color = "black"), 
+    plot.title = element_text(size = 10, face = "bold")
+  ) -> p3
+
+p1/p2/p3  + plot_layout() &  # use ampersand to apply to all
+  theme(plot.margin = margin(2, 2, 1, 0)) 
+
+ggsave("output/CVMetrics.png", width = 8, height = 8, dpi = 300)
+
+rm(list = ls())
+dev.off()
 gc()
+
+
+

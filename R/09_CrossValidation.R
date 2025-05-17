@@ -9,7 +9,7 @@ library(tidyverse)
 library(INLA)
 
 # set path
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
 
 dat <- readRDS("output/FinalData.rds")
