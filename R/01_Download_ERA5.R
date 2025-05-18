@@ -9,8 +9,9 @@
 # install.packages(c("tidyverse", "ecmwfr", "parallel"))
 
 # set your working directory
-wd <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
-setwd(wd)
+# wd
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+setwd(path)
 
 # create a folder Output to store the files
 dir.create(file.path(wd, "output"))
