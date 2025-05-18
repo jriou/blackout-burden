@@ -5,9 +5,9 @@
 
 #-------------------------------------------------------------------------------
 
-# set wd
-wd <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
-setwd(file.path(wd, "output"))
+# wd
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+setwd(path)
 
 # libraries
 library(tidyverse)

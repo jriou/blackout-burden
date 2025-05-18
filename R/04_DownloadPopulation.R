@@ -9,8 +9,8 @@
 # devtools::install_github("wpgp/wpgpDownloadR")
 
 # wd
-wd <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
-setwd(wd)
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+setwd(path)
 
 # load package
 library(wpgpDownloadR)
@@ -21,12 +21,15 @@ library(terra)
 # Check the ISO3 of the country
 # wpgpDownloadR::wpgpDatasets %>% View()
 
+iso3 <- "ESP"
 iso3 <- "PRT"
 # set the years
 year <- 2018
 cov <- paste0("ppp_", year)
 
-f <- lapply(cov, function(X) wpgpGetCountryDataset(ISO3 = iso3, covariate = X, destDir = "output/") )
+f <- lapply(cov, function(X) wpgpGetCountryDataset(ISO3 = iso3, 
+                                                   covariate = X, 
+                                                   destDir = "output") )
 pop <- lapply(f, terra::rast)
 terra::plot(pop[[1]])
 
@@ -37,7 +40,7 @@ terra::plot(pop_ag[[1]])
 # pop <- as.data.frame(pop, xy=TRUE)
 # summary(pop)
 
-saveRDS(pop_ag[[1]], file = paste0("output/population_", year))
+saveRDS(pop_ag[[1]], file = paste0("output/population_", iso3, "_", year))
 
 
 

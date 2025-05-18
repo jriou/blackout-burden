@@ -6,18 +6,20 @@
 #-------------------------------------------------------------------------------
 
 # set path
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
 
 
 library(tidyverse)
 
+cntr <- "PRT"
+cntr <- "ESP"
 
 ##
 ## and after bringing together 
 
-dat.grid <- readRDS("output/OutcomeData.rds")
-pop_daily <- readRDS("output/pop_nutsii_lp.rds")
+dat.grid <- readRDS(paste0("output/OutcomeData_", cntr, ".rds"))
+pop_daily <- readRDS(paste0("output/pop_nutsii_lp_", cntr, ".rds"))
 
 head(dat.grid)
 head(pop_daily)
@@ -30,7 +32,7 @@ dat.fin <- left_join(pop_daily, dat.grid,
                             "age" = "agelg"))
 
 # bring temperature
-temperature <- readRDS("output/CleanPopWeightedTemperature.rds")
+temperature <- readRDS(paste0("output/CleanPopWeightedTemperature_", cntr, ".rds"))
 temperature$NAME[temperature$NAME %in% "Centro (PT)"] <- "Centro"
 dat.fin <- left_join(dat.fin, temperature, 
                      by = c("nuts2_nameLatin_2024" = "NAME", 
@@ -39,7 +41,8 @@ dat.fin <- left_join(dat.fin, temperature,
 summary(dat.fin)
 
 # bring public holidays
-hol <- readRDS("output/hol.rds")
+hol <- readRDS(paste0("output/hol_", cntr, ".rds"))
+
 head(hol)
 hol$date <- as.Date(hol$date)
 dat.fin <- left_join(dat.fin, hol, 
@@ -95,7 +98,7 @@ covid_deaths %>%
 summary(dat.fin)
 dat.fin$OWID_covid_deaths[is.na(dat.fin$OWID_covid_deaths)] <- 0
 
-saveRDS(dat.grid, file = "output/FinalData.rds")
+saveRDS(dat.grid, file = paste0("output/FinalData_", cntr, ".rds"))
 
 rm(list = ls())
 dev.off()

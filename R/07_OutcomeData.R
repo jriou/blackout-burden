@@ -13,7 +13,12 @@ library(dplyr)
 library(rvest)
 library(tidyr) 
 
-setwd("C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/")
+cntr <- "PRT"
+cntr <- "ESP"
+
+# wd
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+setwd(path)
 
 dat <- read_excel("data/PED-724404370_250502.xlsx")
 colnames(dat) <- dat[2,]
@@ -175,7 +180,7 @@ dat.grid <- left_join(dat.grid, dat_fin)
 dat.grid$deaths[is.na(dat.grid$deaths)] <- 0
 
 
-saveRDS(dat.grid, file = "output/OutcomeData.rds")
+saveRDS(dat.grid, file = paste0("output/OutcomeData_", cntr, ".rds"))
 
 rm(list = ls())
 dev.off()

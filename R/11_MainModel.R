@@ -12,7 +12,10 @@ library(INLA)
 path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
 
-dat <- readRDS("output/FinalData.rds")
+cntr <- "PRT"
+cntr <- "ESP"
+
+dat <- readRDS(paste0("output/FinalData_", cntr, ".rds"))
 
 # set he inla timeout in sec
 inla.setOption(inla.timeout=30000)
@@ -124,7 +127,7 @@ t_1 <- Sys.time()
 t_1 - t_0 # 5 minutes
 
 
-saveRDS(res_form, file = "output/RES_MAIN.rds")
+saveRDS(res_form, file = paste0("output/RES_MAIN_", cntr, ".rds"))
 
 rm(list = ls())
 dev.off()

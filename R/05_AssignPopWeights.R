@@ -9,7 +9,7 @@ library(tidyverse)
 library(terra)
 
 # set path
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
 
 t_0 <- Sys.time()
@@ -50,7 +50,8 @@ dat_meteo <- dat_meteo %>% dplyr::rename(variable = temperature)
 meteo <- dat_meteo
 
 
-GetPopulationWeights <- function(plot = F, year = NULL, pop, store = TRUE){
+GetPopulationWeights <- function(plot = F, year = NULL, pop, 
+                                 store = TRUE, spain = F){
   
   # the idea here is that I will find the NN to the coarse space id and sum
   meteo_xy <- meteo[,c("x", "y", "space_id")]
@@ -60,7 +61,14 @@ GetPopulationWeights <- function(plot = F, year = NULL, pop, store = TRUE){
   meteo_xy_sp$space_id <- meteo_xy$space_id
   
   extr.dt <- terra::extract(pop, meteo_xy_sp)
-  meteo_xy$pop <- extr.dt$prt_ppp_2018
+  if(spain == TRUE){
+    meteo_xy$pop <- extr.dt$esp_ppp_2018
+    cntr <- "ESP"
+  }else{
+    meteo_xy$pop <- extr.dt$prt_ppp_2018
+    cntr <- "PRT"
+  }
+  
   
   if(plot == TRUE){
     print(ggplot() +
@@ -79,7 +87,7 @@ GetPopulationWeights <- function(plot = F, year = NULL, pop, store = TRUE){
   
   if(store == TRUE){
     # and store
-    saveRDS(meteo, file = paste0("output/PopweightedTemperature", year, ".rds"))
+    saveRDS(meteo, file = paste0("output/PopweightedTemperature_", cntr, year, ".rds"))
   }
   
   return(meteo)
@@ -90,15 +98,21 @@ GetPopulationWeights <- function(plot = F, year = NULL, pop, store = TRUE){
 #### POPULATION WEIGHTING BASED ON A SINGLE YEAR.  
 
 year <- 2018
-pop_year <- readRDS(paste0("output/population_", year))
-  
+# for spain
+pop_year <- readRDS(paste0("output/population_ESP_", year))
 t_0 <- Sys.time()
-GetPopulationWeights(pop = pop_year, plot = TRUE)
+GetPopulationWeights(pop = pop_year, plot = TRUE, spain = TRUE)
+t_1 <- Sys.time()
+t_1 - t_0 # 5 seconds
+
+# for portugal
+pop_year <- readRDS(paste0("output/population_PRT_", year))
+t_0 <- Sys.time()
+GetPopulationWeights(pop = pop_year, plot = TRUE, spain = FALSE)
 t_1 <- Sys.time()
 t_1 - t_0 # 5 seconds
   
-# there are some NAs in coastal Sri Lanka, but after aggregating into the shp it should be fine. 
-  
+
 rm(list = ls())
 dev.off()
 gc()

@@ -5,15 +5,15 @@
 
 #-------------------------------------------------------------------------------
 
-
 library(jsonlite)
 library(tidyverse)
 
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
 
 # select country
 country <- "PT"
+country <- "ES"
 
 years <- 2010:2025
 pathURL <- paste0("https://date.nager.at/api/v3/publicholidays/", years, "/", country)
@@ -27,10 +27,10 @@ gEtBankHol <- function(X){
 
 for(i in 1:length(pathURL)){print(i); gEtBankHol(pathURL[i])}
 
-lapply(pathURL, gatBankHol) -> hol
+lapply(pathURL, gEtBankHol) -> hol
 hol <- do.call(rbind, hol)
 
-saveRDS(hol, file = "output/hol.rds")
+saveRDS(hol, file = paste0("output/hol_", country, ".rds"))
 
 
 rm(list = ls())

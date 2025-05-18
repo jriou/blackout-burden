@@ -10,17 +10,27 @@ library(sf)
 library(FNN)
 library(patchwork)
 
-# set path
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
+# wd
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
 
-
+cntr <- "ESP"
 ##
 ## Function 
 
-meteo <- readRDS(paste0("output/PopweightedTemperature2018.rds"))
+if(cntr == "PRT"){
+  # Portugal
+  meteo <- readRDS(paste0("output/PopweightedTemperature_PRT.rds"))
+  shp_file <- list.files(paste0(path, "/output/"), pattern = "\\_pt.shp$", full.names = TRUE)
+}
 
-shp_file <- list.files(paste0(path, "/output/"), pattern = "\\.shp$", full.names = TRUE)
+if(cntr == "ESP"){
+  # Spain
+  meteo <- readRDS(paste0("output/PopweightedTemperature_ESP.rds"))
+  shp_file <- list.files(paste0(path, "/output/"), pattern = "\\_es.shp$", full.names = TRUE)
+}
+
+
 shp_string <- shp_file
 
 # read the shp
@@ -29,7 +39,14 @@ shp <- read_sf(shp_string)
   
 sf::sf_use_s2(FALSE)
 shp <- st_transform(shp, crs = 4326)  
-shp$NAME <- shp$n2_L_20
+if(cntr == "PRT"){
+  shp$NAME <- shp$n2_L_20
+}
+
+if(cntr == "ESP"){
+  shp$NAME <- shp$NAME_LATN
+}
+
 shp <- shp[complete.cases(shp$NAME),]
   
 dat_points <- meteo[!duplicated(meteo$space_id),]
@@ -75,7 +92,7 @@ print(
 )
   
 
-saveRDS(meteo_weighted, file = "output/CleanPopWeightedTemperature.rds")
+saveRDS(meteo_weighted, file = paste0("output/CleanPopWeightedTemperature", "_", cntr, ".rds"))
 
 rm(list = ls())
 dev.off()
