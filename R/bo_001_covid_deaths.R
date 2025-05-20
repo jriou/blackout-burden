@@ -26,6 +26,6 @@ bo_001_covid_deaths = function(dat_in, threshold = 100) {
     
   return(dd_2)
 }
-
-setwd("C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/")
-saveRDS(dd_2, file = "output/COVID_DEATHS.rds")
+# 
+# setwd("C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/")
+# saveRDS(dd_2, file = "output/COVID_DEATHS.rds")

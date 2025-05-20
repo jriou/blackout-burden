@@ -64,4 +64,3 @@ bo_000_load = function() {
 
 }
 
-saveRDS(pt_deaths1, file = "output/deaths21_25.rds")
