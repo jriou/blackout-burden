@@ -53,7 +53,7 @@ getSums <- function(X){
   
   test <- res_tot[,paste0("V", 1:200, "_1")] %>% 
     apply(., 1, function(x) quantile(x, 
-                                     probs = c(0.025, 0.05, 0.10, 0.2, 0.3, 0.7, 0.8, 0.9, 0.95, 0.975)))
+                                     probs = c(0.025, 0.05, 0.10, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.975)))
 
   df_plot <- test %>% t() %>% as.data.frame()
   df_plot <- cbind(res_tot %>% dplyr::select(-(paste0("V", 1:200, "_1"))), df_plot)
@@ -70,6 +70,7 @@ ggplot(data = getSums(c("date", "sex"))) +
   geom_ribbon(aes(x = date, ymin = `10%`, ymax = `90%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `20%`, ymax = `80%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `30%`, ymax = `70%`), fill = "blue", alpha = 0.1) + 
+  geom_line(aes(x=date, y=`50%`), col = "blue", alpha = 0.2) + 
   geom_point(aes(x=date, y=deaths_1)) + 
   facet_grid(cols = vars(sex)) + 
   theme_bw()
@@ -81,6 +82,7 @@ ggplot(data = getSums(c("date", "age"))) +
   geom_ribbon(aes(x = date, ymin = `20%`, ymax = `80%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `30%`, ymax = `70%`), fill = "blue", alpha = 0.1) + 
   geom_point(aes(x=date, y=deaths_1)) +
+  geom_line(aes(x=date, y=`50%`), col = "blue", alpha = 0.2) + 
   facet_grid(cols = vars(age)) + theme_bw() + ylab("Observed and predicted mortality")
 
 
@@ -91,6 +93,7 @@ ggplot(data = getSums(c("date", "age", "sex"))) +
   geom_ribbon(aes(x = date, ymin = `20%`, ymax = `80%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `30%`, ymax = `70%`), fill = "blue", alpha = 0.1) + 
   geom_point(aes(x=date, y=deaths_1)) +
+  geom_line(aes(x=date, y=`50%`), col = "blue", alpha = 0.2) + 
 #  geom_point(aes(x=date, y=`50%`), col = "red") + 
   facet_grid(cols = vars(age), rows = vars(sex)) + 
   ylab("Observed and predicted mortality") + 
