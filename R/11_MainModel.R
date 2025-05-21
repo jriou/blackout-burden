@@ -72,8 +72,8 @@ RunINLA <- function(form, dat_agesex, n_sam = 200){
 
 # Define age*sex group and the prediction sex
 DataAgeSex <- function(ageg, sexg, COVID=FALSE, 
-                         start_date = "2025-04-01", 
-                         end_date = "2025-04-07"){
+                         start_date = "2025-04-28", 
+                         end_date = "2025-05-04"){
   
   # subset age*sex
   dat %>% dplyr::filter(age %in% ageg, sex %in% sexg) -> dat_sexage

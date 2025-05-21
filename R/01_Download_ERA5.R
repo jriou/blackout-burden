@@ -2,7 +2,7 @@
 
 # Created 02.04.2025
 
-# Download meteorology in Sri Lanka
+# Download meteorology for Portugal and Spain
 
 #-------------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Proj
 setwd(path)
 
 # create a folder Output to store the files
-dir.create(file.path(wd, "output"))
+dir.create(file.path(path, "output"))
 
 library(tidyverse)
 library(ecmwfr)
@@ -37,7 +37,7 @@ metric <- "2m_temperature"
 # update = FALSE
 # newdates <- "2009-12-30/2025-05-02"
 # OR IF YOU WANT MORE
-# newdates <- c("2025-02-01/2025-02-28", "2025-03-01/2025-03-31")
+# newdates <- c("2025-05-02/2025-05-05")
 
 DownloadMeteorology <- function(X){
   
@@ -89,6 +89,7 @@ toloop <- c(toloop[1:168], "2025-04-01/2025-05-02")
 # run on parallel
 
 funpar <- function(k) DownloadMeteorology(X = toloop[k])
+
 
 t_0 <- Sys.time()
 

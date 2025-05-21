@@ -68,10 +68,11 @@ RunINLA <- function(form, dat_cv, n_sam = 200){
       return(NA)
     })
 } 
+
 # Cross-validation datasets
 DataCrossVal <- function(ageg, sexg, COVID=FALSE, 
                          start_date = "2025-01-01", 
-                         end_date = "2025-03-31"){
+                         end_date = "2025-04-27"){
   
   # subset age*sex
   dat %>% dplyr::filter(age %in% ageg, sex %in% sexg) -> dat_sexage
@@ -171,9 +172,9 @@ t_1 <- Sys.time()
 t_1 - t_0 # 2.5h
 
 
-saveRDS(res_form_1, file = readRDS(paste0("output/CV_FORM1_", cntr, ".rds")))
-saveRDS(res_form_2, file = readRDS(paste0("output/CV_FORM2_", cntr, ".rds")))
-saveRDS(res_form_3, file = readRDS(paste0("output/CV_FORM3_", cntr, ".rds")))
+saveRDS(res_form_1, file = paste0("output/CV_FORM1_", cntr, ".rds"))
+saveRDS(res_form_2, file = paste0("output/CV_FORM2_", cntr, ".rds"))
+saveRDS(res_form_3, file = paste0("output/CV_FORM3_", cntr, ".rds"))
 
 
 rm(list = ls())

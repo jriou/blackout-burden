@@ -23,9 +23,8 @@ t_1 <- Sys.time()
 t_1 - t_0
 
 head(dat_meteo)
-
+# apply(dat_meteo, 2, function(X) sum(is.na(X)))
 dat_meteo <- dat_meteo %>% dplyr::rename(variable = temperature)
-
 # the function
 
 ##

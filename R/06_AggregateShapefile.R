@@ -15,20 +15,14 @@ path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Proj
 setwd(path)
 
 cntr <- "ESP"
+cntr <- "PRT"
 ##
 ## Function 
 
-if(cntr == "PRT"){
-  # Portugal
-  meteo <- readRDS(paste0("output/PopweightedTemperature_PRT.rds"))
-  shp_file <- list.files(paste0(path, "/output/"), pattern = "\\_pt.shp$", full.names = TRUE)
-}
 
-if(cntr == "ESP"){
-  # Spain
-  meteo <- readRDS(paste0("output/PopweightedTemperature_ESP.rds"))
-  shp_file <- list.files(paste0(path, "/output/"), pattern = "\\_es.shp$", full.names = TRUE)
-}
+meteo <- readRDS(paste0("output/PopweightedTemperature_", cntr, ".rds"))
+shp_file <- list.files(paste0(path, "/output/"), 
+                       pattern = paste0("\\_", cntr, ".shp$"), full.names = TRUE)
 
 
 shp_string <- shp_file

@@ -31,6 +31,16 @@ dat.fin <- left_join(pop_daily, dat.grid,
                             "sex" = "sex", 
                             "age" = "agelg"))
 
+##
+## merge age groups
+dat.fin$age %>% table()
+dat.fin$age[dat.fin$age %in% c("65-69", "70-74", "75-79", "80-84")] <- "65-84"
+dat.fin %>% 
+  dplyr::group_by(date, nuts2_nameLatin_2024, age, sex) %>% 
+  summarise(pop=sum(pop), 
+            deaths = sum(deaths)) -> dat.fin
+
+
 # bring temperature
 temperature <- readRDS(paste0("output/CleanPopWeightedTemperature_", cntr, ".rds"))
 temperature$NAME[temperature$NAME %in% "Centro (PT)"] <- "Centro"
@@ -63,7 +73,8 @@ dat.fin$pop[dat.fin$date %in% "2025-01-01"] %>% sum()
 
 # temperature
 dat.fin %>% 
-  filter(sex %in% "male", age %in% "0-64", nuts2_nameLatin_2024 %in% "Alentejo") %>% 
+  filter(sex %in% "male", age %in% "0-64", 
+         nuts2_nameLatin_2024 %in% "Alentejo") %>% 
   ggplot(aes(x=date, y=variable)) +  
   geom_point()
 
@@ -98,7 +109,7 @@ covid_deaths %>%
 summary(dat.fin)
 dat.fin$OWID_covid_deaths[is.na(dat.fin$OWID_covid_deaths)] <- 0
 
-saveRDS(dat.grid, file = paste0("output/FinalData_", cntr, ".rds"))
+saveRDS(dat.fin, file = paste0("output/FinalData_", cntr, ".rds"))
 
 rm(list = ls())
 dev.off()

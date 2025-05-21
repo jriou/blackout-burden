@@ -6,7 +6,7 @@
 #-------------------------------------------------------------------------------
 
 # wd
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/output"
 setwd(path)
 
 # libraries
@@ -111,7 +111,7 @@ t_0 <- Sys.time()
 loop <- list()
 for(i in 1:length(a_loop)) loop[[i]] <- GetTemperature(a = a_loop[i], b = b_loop[i])
 t_1 <- Sys.time()
-t_1 - t_0
+t_1 - t_0 # ~4 hours
 
 dat.temperature <- do.call(rbind, loop)
 saveRDS(dat.temperature, file = "CleanTemperature.rds")

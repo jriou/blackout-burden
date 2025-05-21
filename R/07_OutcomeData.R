@@ -112,8 +112,8 @@ dat$nuts2_nameLatin_2024[dat$nuts2_nameLatin_2024 %in% "Grande Lisboa"] <- "Áre
 # The third is a change in one name
 dat_new <- readRDS("output/deaths21_25.rds")
 dat_new$nuts2_name %>% table()
-dat$NUTSII %>% table()
-dat$NUTSII_name %>% table()
+# dat$NUTSII %>% table()
+# dat$NUTSII_name %>% table()
 
 # make sure is the same as the other file
 dat_new %>% 
@@ -171,7 +171,7 @@ rbind(
 ## need to do the expand grid
 expand.grid(
   NUTSII_name = unique(dat_fin$NUTSII_name), 
-  date = seq(from = dat_fin$date %>% min() %>% as.Date(), to = as.Date("2025-05-09"), by = "days"),
+  date = seq(from = dat_fin$date %>% min() %>% as.Date(), to = as.Date("2025-05-04"), by = "days"),
   agelg = dat_fin$agelg %>% unique(), 
   sex = dat_fin$sex %>% unique()
 ) -> dat.grid
@@ -185,6 +185,7 @@ saveRDS(dat.grid, file = paste0("output/OutcomeData_", cntr, ".rds"))
 rm(list = ls())
 dev.off()
 gc()
+
 
 
 
