@@ -1,6 +1,8 @@
 bo_000_load = function() {
   
   # Portugal
+  # https://www.ine.pt/xportal/xmain?xpid=INE&xpgid=ine_indicadores&contecto=pi&indOcorrCod=0012101&selTab=tab0
+  # 
   
   ## Structure
   pt_alldates = readr::read_csv("data/alldates.csv",col_names="date_text")
