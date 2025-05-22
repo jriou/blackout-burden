@@ -8,6 +8,8 @@
 
 library(tidyverse)
 library(INLA)
+library(patchwork)
+
 
 # set path
 path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
@@ -44,6 +46,9 @@ N <- length(res_form)
 sapply(1:N, function(Z) lapply(res_form, ExtractResults)) -> res
 do.call(rbind, res) -> res
 
+
+
+
 ##
 ## lets do totals by day
 
@@ -64,20 +69,48 @@ getSums <- function(X){
 }
 
 
-
-
-ggplot(data = getSums(c("date", "sex"))) + 
+ggplot(
+  data = getSums(c("date")) %>% 
+    mutate(age = "Total", sex = "Total")
+    ) + 
   geom_ribbon(aes(x = date, ymin = `2.5%`, ymax = `97.5%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `5%`, ymax = `95%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `10%`, ymax = `90%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `20%`, ymax = `80%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `30%`, ymax = `70%`), fill = "blue", alpha = 0.1) + 
   geom_line(aes(x=date, y=`50%`), col = "blue", alpha = 0.2) + 
-  geom_point(aes(x=date, y=deaths_1)) + 
-  facet_grid(cols = vars(sex)) + 
-  theme_bw()
+  geom_point(aes(x=date, y=deaths_1)) + ylab("") + xlab("") + 
+  facet_grid(cols = vars(sex), rows = vars(age)) + 
+  scale_x_date(date_labels = "%d.%m") +
+  theme(plot.margin = unit(c(-1,-1,-1,-1), "cm")) + 
+  theme_bw() -> p1
 
-ggplot(data = getSums(c("date", "age"))) + 
+
+ggplot(data = getSums(c("date", "sex")) %>% 
+         mutate(age = "Total", 
+                sex = ifelse(sex=="female", "Females", "Males")  %>% 
+                  factor(., levels = c("Males", "Females")))) + 
+  geom_ribbon(aes(x = date, ymin = `2.5%`, ymax = `97.5%`), fill = "blue", alpha = 0.1) + 
+  geom_ribbon(aes(x = date, ymin = `5%`, ymax = `95%`), fill = "blue", alpha = 0.1) + 
+  geom_ribbon(aes(x = date, ymin = `10%`, ymax = `90%`), fill = "blue", alpha = 0.1) + 
+  geom_ribbon(aes(x = date, ymin = `20%`, ymax = `80%`), fill = "blue", alpha = 0.1) + 
+  geom_ribbon(aes(x = date, ymin = `30%`, ymax = `70%`), fill = "blue", alpha = 0.1) + 
+  geom_line(aes(x=date, y=`50%`), col = "blue", alpha = 0.2) + 
+  geom_point(aes(x=date, y=deaths_1)) + ylab("") + xlab("") + 
+  facet_grid(rows = vars(sex), cols = vars(age)) + 
+  scale_x_date(date_labels = "%d.%m") +
+  theme(plot.margin = unit(c(-1,-1,-1,-1), "cm")) + 
+  theme_bw() -> p2
+
+
+
+ggplot(data = 
+         getSums(c("date", "age")) %>% 
+         mutate(sex = "Total",
+                age = factor(age, levels = c("0-64", "65-84", "85+"), 
+                             labels = c("65<", "65-84", ">84")))
+       
+       ) + 
   geom_ribbon(aes(x = date, ymin = `2.5%`, ymax = `97.5%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `5%`, ymax = `95%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `10%`, ymax = `90%`), fill = "blue", alpha = 0.1) + 
@@ -85,18 +118,108 @@ ggplot(data = getSums(c("date", "age"))) +
   geom_ribbon(aes(x = date, ymin = `30%`, ymax = `70%`), fill = "blue", alpha = 0.1) + 
   geom_point(aes(x=date, y=deaths_1)) +
   geom_line(aes(x=date, y=`50%`), col = "blue", alpha = 0.2) + 
-  facet_grid(cols = vars(age)) + theme_bw() + ylab("Observed and predicted mortality")
+  facet_grid(cols = vars(age), rows = vars(sex)) + theme_bw() + 
+  ylab("") + xlab("") + 
+  theme(plot.margin = unit(c(-1,-1,-1,-1), "cm")) + 
+  scale_x_date(date_labels = "%d.%m") -> p3
 
 
-ggplot(data = getSums(c("date", "age", "sex"))) + 
+ggplot(data = 
+         getSums(c("date", "age", "sex")) %>%  
+         dplyr::mutate(sex = 
+                         ifelse(sex=="female", "Females", "Males") %>% 
+         factor(., levels = c("Males", "Females")), 
+         age = factor(age, levels = c("0-64", "65-84", "85+"), 
+                      labels = c("65<", "65-84", ">84")))
+       
+       ) +  
   geom_ribbon(aes(x = date, ymin = `2.5%`, ymax = `97.5%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `5%`, ymax = `95%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `10%`, ymax = `90%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `20%`, ymax = `80%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `30%`, ymax = `70%`), fill = "blue", alpha = 0.1) + 
+  geom_line(aes(x=date, y=`50%`), col = "blue", alpha = 0.2) + 
   geom_point(aes(x=date, y=deaths_1)) +
-#  geom_point(aes(x=date, y=`50%`), col = "red") + 
+  #  geom_point(aes(x=date, y=`50%`), col = "red") + 
   facet_grid(cols = vars(age), rows = vars(sex)) + 
-  ylab("Observed and predicted mortality") + 
-  theme_bw()
+  ylab("") + xlab("") + 
+  theme_bw() + 
+  theme(plot.margin = unit(c(-1,-1,-1,-1), "cm")) + 
+  scale_x_date(date_labels = "%d.%m") -> p4
 
+(((p1)|(p3)) + plot_layout(widths = c(1, 2)))/
+  ((p2|p4) + plot_layout(widths = c(1, 2))) 
+# +
+#   plot_annotation('Observed and expected mortality', 
+#                   theme=theme(plot.title=element_text(hjust=0.5)))
+# 
+
+
+# d1 = getSums(c("date")) %>% mutate(age = "Total", sex = "Total") %>% dplyr::select(date, age, sex, deaths_1, `2.5%`:`97.5%`)
+# d2 = getSums(c("date", "sex")) %>% mutate(age = "Total") %>% dplyr::select(date, age, sex, deaths_1, `2.5%`:`97.5%`)
+# d3 = getSums(c("date", "age")) %>% mutate(sex = "Total") %>% dplyr::select(date, age, sex, deaths_1, `2.5%`:`97.5%`)
+# d4 = getSums(c("date", "age", "sex")) %>% dplyr::select(date, age, sex, deaths_1, `2.5%`:`97.5%`)
+# 
+# d <- rbind(d1, d2, d3, d4)
+# 
+# ggplot(data = d) + 
+#   geom_ribbon(aes(x = date, ymin = `2.5%`, ymax = `97.5%`), fill = "blue", alpha = 0.1) + 
+#   geom_ribbon(aes(x = date, ymin = `5%`, ymax = `95%`), fill = "blue", alpha = 0.1) + 
+#   geom_ribbon(aes(x = date, ymin = `10%`, ymax = `90%`), fill = "blue", alpha = 0.1) + 
+#   geom_ribbon(aes(x = date, ymin = `20%`, ymax = `80%`), fill = "blue", alpha = 0.1) + 
+#   geom_ribbon(aes(x = date, ymin = `30%`, ymax = `70%`), fill = "blue", alpha = 0.1) + 
+#   geom_point(aes(x=date, y=deaths_1)) +
+#   #  geom_point(aes(x=date, y=`50%`), col = "red") + 
+#   facet_grid(cols = vars(sex), rows = vars(age)) + 
+#   ylab("Observed and predicted mortality") + 
+#   theme_bw()
+
+
+##
+## Lets calculate excess mortality
+
+# absolute across the country
+
+res %>% 
+  dplyr::select(date, NUTSII, age, sex) %>% 
+  cbind(., 
+        sweep(
+          x = res %>% 
+            dplyr::select(starts_with("V")), 
+          MARGIN = 1, 
+          FUN = "-", 
+          STATS = res$true_values
+        )*(-1)) -> excess
+
+
+getSums2 <- function(X, Y = NULL){
+  
+  if(sum(X %in% "date") == 1){
+    if(is.null(Y)){
+      Y <- unique(excess$date)
+    }
+    excess %>% 
+      dplyr::filter(date %in% Y) -> excess.fun
+  }else{
+    excess.fun <- excess
+  }
+  
+  excess.fun %>% 
+    dplyr::group_by_at(X) %>% 
+    summarise(across(c(paste0("V", 1:200)), list(sum))) -> res_tot 
+  
+  test <- res_tot[,paste0("V", 1:200, "_1")] %>% 
+    apply(., 1, function(x) quantile(x, 
+                                     probs = c(0.5, 0.025, 0.975)))
+  
+  df_plot <- test %>% t() %>% as.data.frame()
+  df_plot <- cbind(res_tot %>% dplyr::select(-(paste0("V", 1:200, "_1"))), df_plot)
+  
+  return(df_plot)
+}
+getSums2(X = c("date", "NUTSII", "age", "sex"), Y = "2025-04-28") %>% View()
+getSums2(c("date", "NUTSII", "sex"), Y = "2025-04-28")
+getSums2(c("date"), Y = c("2025-04-28", "2025-04-29", "2025-04-30"))
+getSums2(X = c("date", "NUTSII"), Y = c("2025-04-28", "2025-04-29", "2025-04-30")) %>% View()
+
+getSums2(c("date"))
