@@ -127,9 +127,37 @@ t_1 <- Sys.time()
 t_1 - t_0 # 5 minutes
 
 
-saveRDS(res_form, file = paste0("output/RES_MAIN_", cntr, ".rds"))
+saveRDS(res_form, file = paste0("output/RES_MAIN2_", cntr, ".rds"))
 
 rm(list = ls())
 dev.off()
 gc()
 
+
+# sensitivity
+if(sens == TRUE){
+  form_2 <- 
+    death_mod ~ 
+    1 + 
+    offset(log(pop)) + 
+    factor(hol) + 
+    xweek + 
+    # day of the week
+    f(id.day, model='iid', constr = TRUE, hyper = hyper.iid) + 
+    # seasonality
+    f(yweek, model='rw2', constr = TRUE, cyclic = TRUE, hyper = hyper.iid) + 
+    # long-term trends
+    f(week, model='iid', constr = TRUE, hyper = hyper.iid) + 
+    # temperature effect
+    f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) + 
+    # space
+    f(id.space, model='iid', constr = TRUE, hyper = hyper.iid) 
+  
+  
+  t_0 <- Sys.time()
+  res_form <- lapply(dat_cv_list, RunINLA, form = form_2)
+  t_1 <- Sys.time()
+  t_1 - t_0 # 5 minutes
+  
+  saveRDS(res_form, file = paste0("output/RES_MAIN_form2_", cntr, ".rds"))
+}

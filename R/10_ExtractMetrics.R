@@ -77,11 +77,12 @@ metrics <- function(Y){
   ret_list %>% return()
 }
 
-# 12 age groups and 14 weeks
+# 6 age groups and 14 weeks
+N <- length(res_form_1)
 t_0 <- Sys.time()
-lapply(1:12, function(Z) lapply(res_form_1[[Z]], metrics)) -> cv_form_1
-lapply(1:12, function(Z) lapply(res_form_2[[Z]], metrics)) -> cv_form_2
-lapply(1:12, function(Z) lapply(res_form_3[[Z]], metrics)) -> cv_form_3
+lapply(1:N, function(Z) lapply(res_form_1[[Z]], metrics)) -> cv_form_1
+lapply(1:N, function(Z) lapply(res_form_2[[Z]], metrics)) -> cv_form_2
+lapply(1:N, function(Z) lapply(res_form_3[[Z]], metrics)) -> cv_form_3
 t_1 <- Sys.time()
 t_1 - t_0 # 2 minutes
 

@@ -17,6 +17,7 @@ cntr <- "PRT"
 cntr <- "ESP"
 
 res_form <- readRDS(file = paste0("output/RES_MAIN_", cntr, ".rds"))
+# res_form <- readRDS(file = paste0("output/RES_MAIN_form2_", cntr, ".rds"))
 
 ExtractResults <- function(Y){
   # Y is the actual model result which needs to run by week and age*sex
@@ -39,7 +40,8 @@ ExtractResults <- function(Y){
   return(tmp)
 }
 
-sapply(1:12, function(Z) lapply(res_form, ExtractResults)) -> res
+N <- length(res_form)
+sapply(1:N, function(Z) lapply(res_form, ExtractResults)) -> res
 do.call(rbind, res) -> res
 
 ##
@@ -93,8 +95,8 @@ ggplot(data = getSums(c("date", "age", "sex"))) +
   geom_ribbon(aes(x = date, ymin = `20%`, ymax = `80%`), fill = "blue", alpha = 0.1) + 
   geom_ribbon(aes(x = date, ymin = `30%`, ymax = `70%`), fill = "blue", alpha = 0.1) + 
   geom_point(aes(x=date, y=deaths_1)) +
-  geom_line(aes(x=date, y=`50%`), col = "blue", alpha = 0.2) + 
 #  geom_point(aes(x=date, y=`50%`), col = "red") + 
   facet_grid(cols = vars(age), rows = vars(sex)) + 
   ylab("Observed and predicted mortality") + 
   theme_bw()
+
