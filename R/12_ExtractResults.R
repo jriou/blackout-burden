@@ -18,9 +18,10 @@ setwd(path)
 
 cntr <- "PRT"
 cntr <- "ESP"
+dlnm_nam <- "_dlnm"
 
-res_form <- readRDS(file = paste0("output/RES_MAIN_", cntr, ".rds"))
-# res_form <- readRDS(file = paste0("output/RES_MAIN_form2_", cntr, ".rds"))
+res_form <- readRDS(file = paste0("output/RES_MAIN_", cntr, dlnm_nam, ".rds"))
+# res_form <- readRDS(file = paste0("output/RES_MAIN_form2_", cntr, dlnm_nam, ".rds"))
 
 ExtractResults <- function(Y){
   # Y is the actual model result which needs to run by week and age*sex
