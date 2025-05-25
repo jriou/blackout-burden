@@ -15,9 +15,11 @@ setwd(path)
 cntr <- "PRT"
 cntr <- "ESP"
 
-res_form_1 <- readRDS(paste0("output/CV_FORM1_", cntr, ".rds"))
-res_form_2 <- readRDS(paste0("output/CV_FORM2_", cntr, ".rds"))
-res_form_3 <- readRDS(paste0("output/CV_FORM3_", cntr, ".rds"))
+dlnm_nam <- "_dlnm"
+
+res_form_1 <- readRDS(paste0("output/CV_FORM1_", cntr, dlnm_nam, ".rds"))
+res_form_2 <- readRDS(paste0("output/CV_FORM2_", cntr, dlnm_nam, ".rds"))
+res_form_3 <- readRDS(paste0("output/CV_FORM3_", cntr, dlnm_nam, ".rds"))
 
 # 12 age groups and 14 weeks of predictions
 # Y <- res_form_1[[1]][[2]]
@@ -290,7 +292,7 @@ ggplot(data = mse_tab) +
 p1/p2/p3  + plot_layout() &  # use ampersand to apply to all
   theme(plot.margin = margin(2, 2, 1, 0)) 
 
-ggsave(paste0("output/CVMetrics_", cntr ,".png"), width = 8, height = 8, dpi = 300)
+ggsave(paste0("output/CVMetrics_", cntr , dlnm_nam, ".png"), width = 8, height = 8, dpi = 300)
 
 rm(list = ls())
 dev.off()

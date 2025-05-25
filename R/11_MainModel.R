@@ -7,10 +7,13 @@
 
 library(tidyverse)
 library(INLA)
+library(dlnm)
 
 # set path
 path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
+
+dlnm = TRUE
 
 cntr <- "PRT"
 cntr <- "ESP"
@@ -22,6 +25,65 @@ inla.setOption(inla.timeout=30000)
 
 # inla group for the temperature
 dat$id.temp <- inla.group(dat$temperature_lag0, n = 30)
+
+# add a dlnm component:
+if(dlnm == TRUE){
+  ## lag basis functions argument list
+  n.lags <- 21
+  blag.args <- list(
+    fun = "bs",
+    df = 5,
+    degree = 2
+  )
+  blag.args$knots <- do.call(
+    "equalknots", c(list(x = 0:n.lags), blag.args))
+  blag.args$knots 
+  
+  ## temperature basis functions argument list
+  btemp.args <- list(
+    fun = "bs",
+    df = 5,
+    degree = 2)
+  btemp.args$knots <- do.call(
+    "equalknots", c(list(x = dat$temperature_lag0), btemp.args))
+  btemp.args$knots
+  
+  ## apply crossbasis for lag0 temperature time series from each location
+  btemp.locs <- lapply(
+    split(x = dat[c("date", "NUTSII", "temperature_lag0")],
+          f = dat$NUTSII), function(d) {
+            data.frame(
+              d,
+              crossbasis(d$temperature_lag0,
+                         lag = n.lags,
+                         argvar = btemp.args,
+                         arglag = blag.args)
+            )
+          }
+  )
+  btemp1 <- do.call("rbind", btemp.locs)
+  
+  dim(btemp1)
+  names(btemp1)
+  
+  head(btemp1, 2)
+  tail(btemp1, 2)
+  
+  ## number of basis functions
+  (nbt1 <- ncol(btemp1) - 3)
+  
+  ## index to match the basis function matrix with data
+  idx.btemp1 <- pmatch(
+    paste(btemp1$NUTSII,
+          btemp1$date),
+    paste(dat$NUTSII,
+          dat$date)
+  )
+  
+  dat <- data.frame(dat, btemp1[idx.btemp1, 3 + 1:nbt1])
+  
+}
+
 # space*year interaction
 dat <- dat %>% 
   mutate(id.spaceyear = paste0(year, NUTSII) %>% as.factor() %>% as.numeric())
@@ -33,7 +95,7 @@ dat$id.day <- lubridate::wday(dat$date)
 hyper.iid <- list(theta = list(prior="pc.prec", param=c(1, 0.1)))
 
 # Inla run
-RunINLA <- function(form, dat_agesex, n_sam = 200){
+RunINLA <- function(form, dat_agesex, n_sam = 1000){
   
   set.seed(11)
   ind <- which(is.na(dat_agesex$death_mod))
@@ -120,6 +182,17 @@ form <-
   # space
   f(id.space, model='iid', constr = TRUE, hyper = hyper.iid) 
 
+if(dlnm == TRUE){
+  
+  bt1.terms <- colnames(btemp1)[3+1:nbt1] 
+  update(
+    form,
+    paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
+          ", paste(bt1.terms, collapse = "+"))
+  ) -> form
+  
+  dlnm_nam <- "_dlnm"
+}
 
 t_0 <- Sys.time()
 res_form <- lapply(dat_cv_list, RunINLA, form = form)
@@ -127,7 +200,7 @@ t_1 <- Sys.time()
 t_1 - t_0 # 5 minutes
 
 
-saveRDS(res_form, file = paste0("output/RES_MAIN2_", cntr, ".rds"))
+saveRDS(res_form, file = paste0("output/RES_MAIN2_", cntr, dlnm_nam, ".rds"))
 
 rm(list = ls())
 dev.off()
@@ -154,10 +227,22 @@ if(sens == TRUE){
     f(id.space, model='iid', constr = TRUE, hyper = hyper.iid) 
   
   
+  if(dlnm == TRUE){
+    
+    bt1.terms <- colnames(btemp1)[3+1:nbt1] 
+    update(
+      form_2,
+      paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
+          ", paste(bt1.terms, collapse = "+"))
+    ) -> form_2
+    
+    dlnm_nam <- "_dlnm"
+  }
+  
   t_0 <- Sys.time()
   res_form <- lapply(dat_cv_list, RunINLA, form = form_2)
   t_1 <- Sys.time()
   t_1 - t_0 # 5 minutes
   
-  saveRDS(res_form, file = paste0("output/RES_MAIN_form2_", cntr, ".rds"))
+  saveRDS(res_form, file = paste0("output/RES_MAIN_form2_", cntr, dlnm_nam, ".rds"))
 }
