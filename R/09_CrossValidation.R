@@ -7,10 +7,13 @@
 
 library(tidyverse)
 library(INLA)
+library(dlnm)
 
 # set path
 path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
+
+dlnm = TRUE
 
 cntr <- "PRT"
 cntr <- "ESP"
@@ -22,6 +25,65 @@ inla.setOption(inla.timeout=30000)
 
 # inla group for the temperature
 dat$id.temp <- inla.group(dat$temperature_lag0, n = 30)
+
+# add a dlnm component:
+if(dlnm == TRUE){
+  ## lag basis functions argument list
+  n.lags <- 21
+  blag.args <- list(
+    fun = "bs",
+    df = 5,
+    degree = 2
+  )
+  blag.args$knots <- do.call(
+    "equalknots", c(list(x = 0:n.lags), blag.args))
+  blag.args$knots 
+  
+  ## temperature basis functions argument list
+  btemp.args <- list(
+    fun = "bs",
+    df = 5,
+    degree = 2)
+  btemp.args$knots <- do.call(
+    "equalknots", c(list(x = dat$temperature_lag0), btemp.args))
+  btemp.args$knots
+  
+  ## apply crossbasis for lag0 temperature time series from each location
+  btemp.locs <- lapply(
+    split(x = dat[c("date", "NUTSII", "temperature_lag0")],
+          f = dat$NUTSII), function(d) {
+            data.frame(
+              d,
+              crossbasis(d$temperature_lag0,
+                         lag = n.lags,
+                         argvar = btemp.args,
+                         arglag = blag.args)
+            )
+          }
+  )
+  btemp1 <- do.call("rbind", btemp.locs)
+  
+  dim(btemp1)
+  names(btemp1)
+  
+  head(btemp1, 2)
+  tail(btemp1, 2)
+  
+  ## number of basis functions
+  (nbt1 <- ncol(btemp1) - 3)
+  
+  ## index to match the basis function matrix with data
+  idx.btemp1 <- pmatch(
+    paste(btemp1$NUTSII,
+          btemp1$date),
+    paste(dat$NUTSII,
+          dat$date)
+  )
+  
+  dat <- data.frame(dat, btemp1[idx.btemp1, 3 + 1:nbt1])
+  
+}
+
 # space*year interaction
 dat <- dat %>% 
   mutate(id.spaceyear = paste0(year, NUTSII) %>% as.factor() %>% as.numeric())
@@ -31,7 +93,7 @@ dat$id.day <- lubridate::wday(dat$date)
 
 # set the iid priors
 hyper.iid <- list(theta = list(prior="pc.prec", param=c(1, 0.1)))
-hyper.iid.str <- list(theta = list(prior="pc.prec", param=c(0.01, 0.1)))
+# hyper.iid.str <- list(theta = list(prior="pc.prec", param=c(0.01, 0.1)))
 
 # Inla run
 RunINLA <- function(form, dat_cv, n_sam = 200){
@@ -156,6 +218,33 @@ form_3 <-
   # space
   f(id.space, model='iid', constr = TRUE, hyper = hyper.iid) 
 
+dlnm_nam <- ""
+
+if(dlnm == TRUE){
+  
+  bt1.terms <- colnames(btemp1)[3+1:nbt1] 
+  update(
+    form_1,
+    paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
+          ", paste(bt1.terms, collapse = "+"))
+  ) -> form_1
+  
+  bt1.terms <- colnames(btemp1)[3+1:nbt1] 
+  update(
+    form_2,
+    paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
+          ", paste(bt1.terms, collapse = "+"))
+  ) -> form_2
+  
+  bt1.terms <- colnames(btemp1)[3+1:nbt1] 
+  update(
+    form_3,
+    paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
+          ", paste(bt1.terms, collapse = "+"))
+  ) -> form_3
+  
+  dlnm_nam <- "_dlnm"
+}
 
 res_form_1 <- list()
 res_form_2 <- list()
@@ -172,9 +261,9 @@ t_1 <- Sys.time()
 t_1 - t_0 # 2.5h
 
 
-saveRDS(res_form_1, file = paste0("output/CV_FORM1_", cntr, ".rds"))
-saveRDS(res_form_2, file = paste0("output/CV_FORM2_", cntr, ".rds"))
-saveRDS(res_form_3, file = paste0("output/CV_FORM3_", cntr, ".rds"))
+saveRDS(res_form_1, file = paste0("output/CV_FORM1_", cntr, dlnm_nam, ".rds"))
+saveRDS(res_form_2, file = paste0("output/CV_FORM2_", cntr, dlnm_nam, ".rds"))
+saveRDS(res_form_3, file = paste0("output/CV_FORM3_", cntr, dlnm_nam, ".rds"))
 
 
 rm(list = ls())
