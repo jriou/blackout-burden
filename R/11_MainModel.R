@@ -19,6 +19,7 @@ cntr <- "PRT"
 # cntr <- "ESP"
 
 dat <- readRDS(paste0("output/FinalData_", cntr, ".rds"))
+dat <- dat[!is.na(dat$deaths),]
 
 # set he inla timeout in sec
 inla.setOption(inla.timeout=30000)
@@ -49,9 +50,13 @@ if(dlnm == TRUE){
   btemp.args$knots
   
   ## apply crossbasis for lag0 temperature time series from each location
+  ## Note that your data is by age and sex, thus you need to account for this
+  dat_noagesex <- 
+    dat %>% dplyr::filter(age %in% "85+", sex %in% "female")
+  
   btemp.locs <- lapply(
-    split(x = dat[c("date", "NUTSII", "temperature_lag0")],
-          f = dat$NUTSII), function(d) {
+    split(x = dat_noagesex[c("date", "NUTSII", "temperature_lag0")],
+          f = dat_noagesex$NUTSII), function(d) {
             data.frame(
               d,
               crossbasis(d$temperature_lag0,
@@ -62,6 +67,8 @@ if(dlnm == TRUE){
           }
   )
   btemp1 <- do.call("rbind", btemp.locs)
+  summary(btemp1) # 126 NAs, which are likely the ones we are missing from the start of the
+  # study. Lets caclulate 6 NUTSII and 21 lags
   
   dim(btemp1)
   names(btemp1)
@@ -72,16 +79,11 @@ if(dlnm == TRUE){
   ## number of basis functions
   (nbt1 <- ncol(btemp1) - 3)
   
-  ## index to match the basis function matrix with data
-  idx.btemp1 <- pmatch(
-    paste(btemp1$NUTSII,
-          btemp1$date),
-    paste(dat$NUTSII,
-          dat$date)
-  )
+  btemp1$temperature_lag0 <- NULL
+  rownames(btemp1) <-  NULL
   
-  dat <- data.frame(dat, btemp1[idx.btemp1, 3 + 1:nbt1])
-  
+  dat <- left_join(dat, btemp1)
+  summary(dat) # this needs to have 6*6*21 NAs
 }
 
 # space*year interaction
@@ -184,7 +186,8 @@ form <-
 
 if(dlnm == TRUE){
   
-  bt1.terms <- colnames(btemp1)[3+1:nbt1] 
+  bt1.terms <- colnames(btemp1)[colnames(btemp1) %>% startsWith(prefix = "v")]
+  
   update(
     form,
     paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
@@ -229,7 +232,8 @@ if(sens == TRUE){
   
   if(dlnm == TRUE){
     
-    bt1.terms <- colnames(btemp1)[3+1:nbt1] 
+    bt1.terms <- colnames(btemp1)[colnames(btemp1) %>% startsWith(prefix = "v")]
+    
     update(
       form_2,
       paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
