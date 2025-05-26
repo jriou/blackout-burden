@@ -13,6 +13,7 @@ setwd(path)
 library(tidyverse)
 library(terra)
 library(tidyr)
+library(parallel)
 
 country <- "PRT"
 country <- "ESP"
