@@ -1,7 +1,7 @@
 
 # Created 02.04.2025
 
-# Clean the ERA5 meteorology data in Sri Lanka
+# Clean the ERA5 meteorology data Spain and Portugal
 
 #-------------------------------------------------------------------------------
 
@@ -9,14 +9,10 @@
 path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/output"
 setwd(path)
 
-country <- "PRT"
-country <- "ESP"
-
 # libraries
 library(tidyverse)
 library(terra)
 library(tidyr)
-library(parallel)
 
 # function to retrieve daily statistic
 DailyStat <- function(start, stop, datenam, metric, stat, d = d){
@@ -52,7 +48,7 @@ stat_loop <- "mean"
 
 files2read <- list.files()[list.files() %>% startsWith(.,metric_loop)]
 
-GetTemperature <- function(a, b, country){
+GetTemperature <- function(a,b){
   
   files2read_sub <- files2read[a:b]
   meteo_extract <- lapply(files2read_sub, terra::rast) 
@@ -82,14 +78,7 @@ GetTemperature <- function(a, b, country){
   
   t_0 <- Sys.time()
   date2 <- as.POSIXct(sub(".*=", "", data_long$date) %>% as.numeric(), origin = "1970-01-01")
-  
-  if(country == "PRT"){
-    date2 <- format(date2, format='%Y-%m-%d', tz = "Europe/Lisbon")
-  }
-  
-  if(country == "ESP"){
-    date2 <- format(date2, format='%Y-%m-%d', tz = "Europe/Madrid")
-  }
+  date2 <- format(date2, format='%Y-%m-%d', tz = "Europe/Lisbon")
   data_long$date2 <- date2
   t_1 <- Sys.time()
   t_1 - t_0 # 2 minutes
@@ -118,47 +107,15 @@ b_loop <- c(b_loop, length(files2read))
 # t_1 <- Sys.time()
 # t_1 - t_0
 
-# t_0 <- Sys.time()
-# loop <- list()
-# for(i in 1:length(a_loop)) loop[[i]] <- GetTemperature(a = a_loop[i], b = b_loop[i])
-# t_1 <- Sys.time()
-# t_1 - t_0 # ~4 hours
-# 
-# dat.temperature <- do.call(rbind, loop)
-# saveRDS(dat.temperature, file = "CleanTemperature.rds")
-
-##
-## RUN ON PARALLEL
-# Set up parallel environment
-k <- 1:length(a_loop)
-par.fun <- function(k) GetTemperature(a = a_loop[k], b = b_loop[k], country = country)
-
-# cores
-ncores <- 20
-cl_inla <- makeCluster(ncores, methods=FALSE)
-
-# extract packages on parallel environment 
-clusterEvalQ(cl_inla, {
-  library(tidyverse)
-  library(terra)
-  library(tidyr)
-})
-
-# extract R objects on parallel environment
-clusterExport(cl_inla, c("a_loop", "b_loop", "k", "DailyStat", "metric_loop", "stat_loop",
-                         "files2read", "GetTemperature", "country"))
-
-# run the the function in parallel
 t_0 <- Sys.time()
-outpar <- parLapply(cl = cl_inla, k, par.fun)
+loop <- list()
+for(i in 1:length(a_loop)) loop[[i]] <- GetTemperature(a = a_loop[i], b = b_loop[i])
 t_1 <- Sys.time()
-t_1 - t_0
+t_1 - t_0 # ~4 hours
 
-dat.temperature <- do.call(rbind, outpar)
-saveRDS(dat.temperature, file = "CleanTemperature_", country, ".rds")
+dat.temperature <- do.call(rbind, loop)
+saveRDS(dat.temperature, file = "CleanTemperature.rds")
 
-# close parallel environment
-stopCluster(cl_inla)
 
 rm(list = ls())
 gc()
