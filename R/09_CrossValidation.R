@@ -17,15 +17,17 @@ setwd(path)
 dlnm = TRUE
 
 cntr <- "PRT"
-cntr <- "ESP"
+# cntr <- "ESP"
 
 dat <- readRDS(paste0("output/FinalData_", cntr, ".rds"))
+dat <- dat[!is.na(dat$deaths),]
 
 # set he inla timeout in sec
 inla.setOption(inla.timeout=30000)
 
 # inla group for the temperature
 dat$id.temp <- inla.group(dat$temperature_lag0, n = 30)
+summary(dat$temperature_lag0) # no NAs in temperature
 
 # add a dlnm component:
 if(dlnm == TRUE){
@@ -50,9 +52,13 @@ if(dlnm == TRUE){
   btemp.args$knots
   
   ## apply crossbasis for lag0 temperature time series from each location
+  ## Note that your data is by age and sex, thus you need to account for this
+  dat_noagesex <- 
+    dat %>% dplyr::filter(age %in% "85+", sex %in% "female")
+  
   btemp.locs <- lapply(
-    split(x = dat[c("date", "NUTSII", "temperature_lag0")],
-          f = dat$NUTSII), function(d) {
+    split(x = dat_noagesex[c("date", "NUTSII", "temperature_lag0")],
+          f = dat_noagesex$NUTSII), function(d) {
             data.frame(
               d,
               crossbasis(d$temperature_lag0,
@@ -63,6 +69,8 @@ if(dlnm == TRUE){
           }
   )
   btemp1 <- do.call("rbind", btemp.locs)
+  summary(btemp1) # 126 NAs, which are likely the ones we are missing from the start of the
+  # study. Lets caclulate 6 NUTSII and 21 lags
   
   dim(btemp1)
   names(btemp1)
@@ -73,16 +81,11 @@ if(dlnm == TRUE){
   ## number of basis functions
   (nbt1 <- ncol(btemp1) - 3)
   
-  ## index to match the basis function matrix with data
-  idx.btemp1 <- pmatch(
-    paste(btemp1$NUTSII,
-          btemp1$date),
-    paste(dat$NUTSII,
-          dat$date)
-  )
+  btemp1$temperature_lag0 <- NULL
+  rownames(btemp1) <-  NULL
   
-  dat <- data.frame(dat, btemp1[idx.btemp1, 3 + 1:nbt1])
-  
+  dat <- left_join(dat, btemp1)
+  summary(dat) # this needs to have 6*6*21 NAs
 }
 
 # space*year interaction
@@ -158,7 +161,8 @@ DataCrossVal <- function(ageg, sexg, COVID=FALSE,
 }
 
 # All possible combinations of age and sex
-list.sc <- expand.grid(age = as.character(unique(dat$age)), sex = as.character(unique(dat$sex)))
+list.sc <- expand.grid(age = as.character(unique(dat$age)), 
+                       sex = as.character(unique(dat$sex)))
 
 # get the datasets
 dat_cv_list <- apply(
@@ -223,21 +227,20 @@ dlnm_nam <- ""
 
 if(dlnm == TRUE){
   
-  bt1.terms <- colnames(btemp1)[3+1:nbt1] 
+  bt1.terms <- colnames(btemp1)[colnames(btemp1) %>% startsWith(prefix = "v")]
+  
   update(
     form_1,
     paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
           ", paste(bt1.terms, collapse = "+"))
   ) -> form_1
   
-  bt1.terms <- colnames(btemp1)[3+1:nbt1] 
   update(
     form_2,
     paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
           ", paste(bt1.terms, collapse = "+"))
   ) -> form_2
   
-  bt1.terms <- colnames(btemp1)[3+1:nbt1] 
   update(
     form_3,
     paste(".~. -f(id.temp, model='rw2', hyper=hyper.iid, constr = TRUE, scale.model = TRUE) +
@@ -294,14 +297,12 @@ clusterExport(cl_inla, c("RunINLA", "k", "form_1", "form_2", "form_3",
 t_0 <- Sys.time()
 outpar <- parLapply(cl = cl_inla, k, par.fun)
 t_1 <- Sys.time()
-t_1 - t_0 # 20 minutes
+t_1 - t_0 # 30 minutes
 
 ##
 ## needs some post processing
 
-dat.temperature <- do.call(rbind, outpar)
-saveRDS(dat.temperature, file = "CleanTemperature_", country, ".rds")
-
+# ... (TO BE WRITTEN)
 
 saveRDS(res_form_1, file = paste0("output/CV_FORM1_", cntr, dlnm_nam, ".rds"))
 saveRDS(res_form_2, file = paste0("output/CV_FORM2_", cntr, dlnm_nam, ".rds"))
