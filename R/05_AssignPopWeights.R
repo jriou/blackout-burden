@@ -12,8 +12,11 @@ library(terra)
 path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
 setwd(path)
 
+cntr <- "PRT"
+cntr <- "ESP"
+
 t_0 <- Sys.time()
-dat_meteo <- readRDS("output/CleanTemperature.rds")
+dat_meteo <- readRDS(paste0("output/CleanTemperature_", cntr, ".rds"))
 dat_meteo$space_id <- paste0(dat_meteo$x, dat_meteo$y) %>% as.factor() %>% as.numeric()
 dat_meteo$dates <- as.Date(dat_meteo$date2)
 dat_meteo$wweek <- lubridate::week(dat_meteo$dates)
@@ -97,17 +100,9 @@ GetPopulationWeights <- function(plot = F, year = NULL, pop,
 #### POPULATION WEIGHTING BASED ON A SINGLE YEAR.  
 
 year <- 2018
-# for spain
-pop_year <- readRDS(paste0("output/population_ESP_", year))
+pop_year <- readRDS(paste0("output/population_", cntr, "_", year))
 t_0 <- Sys.time()
 GetPopulationWeights(pop = pop_year, plot = TRUE, spain = TRUE)
-t_1 <- Sys.time()
-t_1 - t_0 # 5 seconds
-
-# for portugal
-pop_year <- readRDS(paste0("output/population_PRT_", year))
-t_0 <- Sys.time()
-GetPopulationWeights(pop = pop_year, plot = TRUE, spain = FALSE)
 t_1 <- Sys.time()
 t_1 - t_0 # 5 seconds
   
