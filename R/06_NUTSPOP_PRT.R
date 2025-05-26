@@ -21,7 +21,7 @@ sum(!portugal_nuts3_2013$NAME_LATN %in% portugal_nuts3_2016$NAME_LATN)
 # nice nutsiii 2013 and nutsiii 2016 are the same
 
 # set path
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/Desktop/Portugal/"
+path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden"
 setwd(path)
 
 list.files("data/")[list.files("data/") %>% startsWith(., "pop")] %>% 
@@ -142,9 +142,6 @@ expand.grid(age = pop$ageg %>% unique(),
             region = pop$nutsiii %>% unique(), 
             date = seq(from = as.Date("2010-01-01"), to = as.Date("2025-5-31"), by = "days")) -> pop_daily
 
-# As the population is only available for the 1st of January of every year, we need to create a weekly version
-# to feed in the model. The above gives as all the possible combinations required for the linear interpolation.
-
 # the reference date refers to the population availability of the first of each year
 pop_daily$year <- lubridate::year(pop_daily$date)
 pop_daily %>% group_by(year) %>% mutate(refdate = as.Date(paste0(year, "-01-01"))) -> pop_daily
@@ -234,7 +231,7 @@ pop_daily %>% filter(date <= max(dat.grid$date)) %>% dim()
 dim(dat.grid) # perfect, they are identical!
 
 # store
-saveRDS(pop_daily, file = "output/pop_nutsii_lp.rds")
+saveRDS(pop_daily, file = "output/pop_nutsii_lp_PRT.rds")
 
 rm(list = ls())
 dev.off()
