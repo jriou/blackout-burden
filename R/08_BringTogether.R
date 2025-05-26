@@ -122,10 +122,10 @@ if(cntr == "ESP"){
   # bring temperature
   temperature <- readRDS(paste0("output/CleanPopWeightedTemperature_", cntr, ".rds"))
   
-  cbind(
-    temperature$NAME %>% unique() %>%  sort(),
-    pop_daily$nutsii_name %>% unique() %>%  sort()
-  ) %>% View()
+  # cbind(
+  #   temperature$NAME %>% unique() %>%  sort(),
+  #   pop_daily$nutsii_name %>% unique() %>%  sort()
+  # ) %>% View()
   
   # focus on the Spanish mainland
   pop_nutsii <- pop_daily$nutsii_name %>% unique()
@@ -153,16 +153,26 @@ if(cntr == "ESP"){
   # bring public holidays
   hol <- readRDS(paste0("output/hol_", cntr, ".rds"))
   
-  head(hol)
   hol$date <- as.Date(hol$date)
-  dat.fin <- left_join(dat.fin, hol, 
+  pop_daily <- left_join(pop_daily, 
+                       hol %>% 
+                         dplyr::select(date, counties, hol) %>% 
+                         dplyr::filter(counties %in% "National"), 
                        by = c("date" = "date"))
+  pop_daily$hol <-ifelse(is.na(pop_daily$hol), 0, 1)
   
-  dat.fin$name <- NULL
-  dat.fin$hol <-ifelse(is.na(dat.fin$hol), 0, 1)
+  pop_daily <- left_join(pop_daily, 
+                         hol %>% 
+                           dplyr::select(date, counties, hol) %>% 
+                           dplyr::filter(!counties %in% c("National", "Canarias")), 
+                         by = c("date" = "date", "nutsii_name" = "counties"))
   
-  
-}
+  pop_daily$hol.y <-ifelse(is.na(pop_daily$hol.y), 0, 1)
+  pop_daily$hol <- pop_daily$hol.x + pop_daily$hol.y
+  pop_daily$hol.x <- pop_daily$hol.y <- NULL
+
+  }
+
 
 rm(list = ls())
 dev.off()
