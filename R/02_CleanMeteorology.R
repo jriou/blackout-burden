@@ -147,7 +147,7 @@ clusterEvalQ(cl_inla, {
 # extract R objects on parallel environment
 clusterExport(cl_inla, c("a_loop", "b_loop", "k", "DailyStat", "metric_loop", "stat_loop",
                          "files2read", "GetTemperature", "country"))
-k <- 1:2
+
 # run the the function in parallel
 t_0 <- Sys.time()
 outpar <- parLapply(cl = cl_inla, k, par.fun)
