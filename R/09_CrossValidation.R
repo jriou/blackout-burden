@@ -8,6 +8,7 @@
 library(tidyverse)
 library(INLA)
 library(dlnm)
+library(parallel)
 
 # set path
 path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
@@ -246,19 +247,60 @@ if(dlnm == TRUE){
   dlnm_nam <- "_dlnm"
 }
 
-res_form_1 <- list()
-res_form_2 <- list()
-res_form_3 <- list()
+# res_form_1 <- list()
+# res_form_2 <- list()
+# res_form_3 <- list()
+# 
+# t_0 <- Sys.time()
+# for(i in 1:length(dat_cv_list)){
+#   print(i)
+#   res_form_1[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_1)
+#   res_form_2[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_2)
+#   res_form_3[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_3)
+# }
+# t_1 <- Sys.time()
+# t_1 - t_0 # 2.5h
 
+
+##
+## RUN ON PARALLEL
+# Set up parallel environment
+k <- 1:length(dat_cv_list)
+par.fun <- function(k){
+  res_form <- list(
+    res_form_1 = lapply(dat_cv_list[[k]], RunINLA, form = form_1),
+    res_form_2 = lapply(dat_cv_list[[k]], RunINLA, form = form_2),
+    res_form_3 = lapply(dat_cv_list[[k]], RunINLA, form = form_3)
+  )
+  return(res_form)
+} 
+  
+# cores
+ncores <- 6
+cl_inla <- makeCluster(ncores, methods=FALSE)
+
+# extract packages on parallel environment 
+clusterEvalQ(cl_inla, {
+  library(tidyverse)
+  library(INLA)
+  library(dlnm)
+})
+
+# extract R objects on parallel environment
+clusterExport(cl_inla, c("RunINLA", "k", "form_1", "form_2", "form_3",
+                         "dat_cv_list", "hyper.iid"))
+
+# run the the function in parallel
 t_0 <- Sys.time()
-for(i in 1:length(dat_cv_list)){
-  print(i)
-  res_form_1[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_1)
-  res_form_2[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_2)
-  res_form_3[[i]] <- lapply(dat_cv_list[[i]], RunINLA, form = form_3)
-}
+outpar <- parLapply(cl = cl_inla, k, par.fun)
 t_1 <- Sys.time()
-t_1 - t_0 # 2.5h
+t_1 - t_0 # 20 minutes
+
+##
+## needs some post processing
+
+dat.temperature <- do.call(rbind, outpar)
+saveRDS(dat.temperature, file = "CleanTemperature_", country, ".rds")
 
 
 saveRDS(res_form_1, file = paste0("output/CV_FORM1_", cntr, dlnm_nam, ".rds"))
