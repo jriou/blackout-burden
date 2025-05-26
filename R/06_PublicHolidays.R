@@ -12,8 +12,8 @@ path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Proj
 setwd(path)
 
 # select country
-country <- "PT"
-country <- "ES"
+country <- "PRT"
+country <- "ESP"
 
 years <- 2010:2025
 pathURL <- paste0("https://date.nager.at/api/v3/publicholidays/", years, "/", country)
