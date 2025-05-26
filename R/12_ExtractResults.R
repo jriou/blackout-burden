@@ -17,7 +17,7 @@ path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Proj
 setwd(path)
 
 cntr <- "PRT"
-cntr <- "ESP"
+# cntr <- "ESP"
 dlnm_nam <- "_dlnm"
 
 res_form <- readRDS(file = paste0("output/RES_MAIN_", cntr, dlnm_nam, ".rds"))
@@ -153,7 +153,7 @@ ggplot(data =
   ((p2|p4) + plot_layout(widths = c(1, 2))) 
 
 
-ggsave(filename = "output/fig1.png", dpi = 300, width = 8)
+ggsave(filename = "output/fig1.png", dpi = 300, width = 8, height = 6)
 
 # +
 #   plot_annotation('Observed and expected mortality', 

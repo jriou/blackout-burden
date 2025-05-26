@@ -21,7 +21,7 @@ res_form_1 <- readRDS(paste0("output/CV_FORM1_", cntr, dlnm_nam, ".rds"))
 res_form_2 <- readRDS(paste0("output/CV_FORM2_", cntr, dlnm_nam, ".rds"))
 res_form_3 <- readRDS(paste0("output/CV_FORM3_", cntr, dlnm_nam, ".rds"))
 
-# 12 age groups and 14 weeks of predictions
+# 6 age groups and 14 weeks of predictions
 # Y <- res_form_1[[1]][[2]]
 metrics <- function(Y){
   # Y is the actual model result which needs to run by week and age*sex

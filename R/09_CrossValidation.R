@@ -301,8 +301,17 @@ t_1 - t_0 # 30 minutes
 
 ##
 ## needs some post processing
+res_form_1 <- list()
+res_form_2 <- list()
+res_form_3 <- list()
 
-# ... (TO BE WRITTEN)
+t_0 <- Sys.time()
+for(i in 1:length(dat_cv_list)){
+  print(i)
+  res_form_1[[i]] <- outpar[[i]][[1]]
+  res_form_2[[i]] <- outpar[[i]][[2]]
+  res_form_3[[i]] <- outpar[[i]][[3]]
+}
 
 saveRDS(res_form_1, file = paste0("output/CV_FORM1_", cntr, dlnm_nam, ".rds"))
 saveRDS(res_form_2, file = paste0("output/CV_FORM2_", cntr, dlnm_nam, ".rds"))
