@@ -286,13 +286,13 @@ if(cntr == "ESP"){
   dat$ageg[dat$ageg %in% "5"] <- "65-84" # 75-84
   dat$ageg[dat$ageg %in% "6"] <- ">84" # 85+
   
-  dat$ageg <- factor(dat$ageg, levels = c("64<", "65-84", ">85"))
+  dat$ageg <- factor(dat$ageg, levels = c("65<", "65-84", ">84"))
   
   dat %>% 
     dplyr::group_by(date, ageg, sex, year, nutsii_name, nutsii_code) %>% 
     dplyr::summarise(deaths = sum(deaths)) -> dat
   
-  
+  # sum(is.na(dat$nutsii_name))
   ##
   ## need to do the expand grid
   expand.grid(
@@ -302,13 +302,18 @@ if(cntr == "ESP"){
     sex = dat$sex %>% unique()
   ) -> dat.grid
   
+  dat$nutsii_code <- NULL
+  dat$year <- NULL
+  head(dat)
+  head(dat.grid)
   dat.grid <- left_join(dat.grid, dat)
   dat.grid$deaths[is.na(dat.grid$deaths)] <- 0
   
   dat.grid %>% 
     dplyr::group_by(ageg) %>% 
     dplyr::summarise(sum(deaths))
-  
+  summary(dat.grid)
+  sum(is.na(dat.grid$sex))
   saveRDS(dat.grid, file = paste0("output/OutcomeData_", cntr, ".rds"))
   
 }
