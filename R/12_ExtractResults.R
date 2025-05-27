@@ -10,7 +10,7 @@ library(tidyverse)
 library(INLA)
 library(patchwork)
 library(xtable)
-
+library(sf)
 
 # set path
 path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
@@ -160,7 +160,7 @@ fig1_prt <- fig1(res=res_prt, title = "A. Portugal")
 
 
 
-ggsave(filename = "output/fig1.png", dpi = 300, width = 8, height = 8)
+ggsave(filename = "output/fig1.png", dpi = 300, width = 8, height = 9)
 dev.off()
 # +
 #   plot_annotation('Observed and expected mortality', 
@@ -234,14 +234,14 @@ getSums2 <- function(X, Y = NULL, groupd = FALSE, excess){
   
   excess.fun %>% 
     dplyr::group_by_at(X) %>% 
-    summarise(across(c(paste0("V", 1:200)), list(sum))) -> res_tot 
+    summarise(across(c(paste0("V", 1:1000)), list(sum))) -> res_tot 
   
-  test <- res_tot[,paste0("V", 1:200, "_1")] %>% 
+  test <- res_tot[,paste0("V", 1:1000, "_1")] %>% 
     apply(., 1, function(x) quantile(x, 
                                      probs = c(0.5, 0.025, 0.975)))
   
   df_plot <- test %>% t() %>% as.data.frame()
-  df_plot <- cbind(res_tot %>% dplyr::select(-(paste0("V", 1:200, "_1"))), df_plot)
+  df_plot <- cbind(res_tot %>% dplyr::select(-(paste0("V", 1:1000, "_1"))), df_plot)
   
   return(df_plot)
 }
@@ -349,7 +349,7 @@ print(xtable(tab1), include.rownames=FALSE)
 
 ##
 ## and something about space, like relative excess. 
-getRelativeExcess <- function(X, Y = NULL, groupd = FALSE){
+getRelativeExcess <- function(X, Y = NULL, groupd = FALSE, excess, res){
     
     if(sum(X %in% "date") == 1){
       if(is.null(Y)){
@@ -366,34 +366,150 @@ getRelativeExcess <- function(X, Y = NULL, groupd = FALSE){
       excess.fun <- excess
     }
   
-
-    
     excess.fun %>% 
       dplyr::group_by_at(X) %>% 
-      summarise(across(c(paste0("V", 1:200)), list(sum))) -> res_tot 
+      summarise(across(c(paste0("V", 1:1000)), list(sum))) -> res_tot 
     
     res %>% 
       dplyr::select(date, NUTSII, age, sex, true_values, starts_with("V")) %>% 
       dplyr::group_by_at(X) %>% 
-      summarise(across(c(paste0("V", 1:200)), list(sum))) -> res_exp
+      summarise(across(c(paste0("V", 1:1000)), list(sum))) -> res_exp
     
     (res_tot %>% ungroup() %>% dplyr::select(starts_with("V")))/
       (res_exp %>% ungroup() %>% dplyr::select(starts_with("V"))) -> relativeex
     
     # cbind(excess.fun %>% dplyr::select(all_of(X)), relativeex)
     
-    test <- relativeex[,paste0("V", 1:200, "_1")] %>% 
+    test <- relativeex[,paste0("V", 1:1000, "_1")] %>% 
       apply(., 1, function(x) quantile(x, 
                                        probs = c(0.5, 0.025, 0.975)))
     
+    post_prob <- relativeex[,paste0("V", 1:1000, "_1")] > 0
+    post_prob <- post_prob %>% apply(., 1, mean)
     df_plot <- test %>% t() %>% as.data.frame()
-    df_plot <- cbind(res_tot %>% dplyr::select(-(paste0("V", 1:200, "_1"))), df_plot)
+    df_plot <- cbind(res_tot %>% dplyr::select(-(paste0("V", 1:1000, "_1"))), df_plot, post_prob)
     
     return(df_plot)
 }
 
 
-(getRelativeExcess(c("date", "NUTSII"), 
+
+lag0_map <- getRelativeExcess(excess = excess_esp, 
+                              res = res_esp, 
+                              c("date", "NUTSII"), 
+                              groupd = TRUE, 
+                              Y = c("2025-04-28"))
+
+lag0_map$lag <- "lag0"
+
+lag0_2_map <- getRelativeExcess(excess = excess_esp, 
+                              res = res_esp, 
+                              c("date", "NUTSII"), 
+                              groupd = TRUE, 
+                              Y = c("2025-04-28", "2025-04-29", "2025-04-30"))
+
+lag0_2_map$lag <- "lag0-2"
+
+
+lag0_6_map <- getRelativeExcess(excess = excess_esp, 
+                                res = res_esp, 
+                                c("NUTSII"))
+
+lag0_6_map$lag <- "lag0-6"
+
+map_spain <- rbind(lag0_map, lag0_2_map, lag0_6_map)
+map_spain$country <- "Spain"
+
+
+##
+## same for Portugal
+
+lag0_map <- getRelativeExcess(excess = excess_prt, 
+                              res = res_prt, 
+                              c("date", "NUTSII"), 
+                              groupd = TRUE, 
+                              Y = c("2025-04-28"))
+
+lag0_map$lag <- "lag0"
+
+lag0_2_map <- getRelativeExcess(excess = excess_prt, 
+                                res = res_prt, 
+                                c("date", "NUTSII"), 
+                                groupd = TRUE, 
+                                Y = c("2025-04-28", "2025-04-29", "2025-04-30"))
+
+lag0_2_map$lag <- "lag0-2"
+
+
+lag0_6_map <- getRelativeExcess(excess = excess_prt, 
+                                res = res_prt, 
+                                c("NUTSII"))
+
+lag0_6_map$lag <- "lag0-6"
+
+map_port <- rbind(lag0_map, lag0_2_map, lag0_6_map)
+map_port$country <- "Portugal"
+
+map_plot <- rbind(map_spain, map_port)
+
+shp_prt <- read_sf("output/shp_PRT.dbf")
+shp_esp <- read_sf("output/shp_ESP.dbf")
+shp_esp %>% 
+  select(NAME_LATN) %>% 
+  filter(!NAME_LATN %in% "Canarias") -> shp_esp
+
+shp <- rbind(shp_esp, 
+             shp_prt %>% 
+               select(NAME_LATN = n2_L_20)) 
+plot(shp$geometry)
+shp$NAME_LATN[shp$NAME_LATN %in% "Centro (PT)"] <- "Centro"
+# nice and bring to the other file
+map_plot <- left_join(shp, map_plot, by = c("NAME_LATN" = "NUTSII"))
+
+map_plot <- map_plot[complete.cases(map_plot$country),]
+ggplot(data = map_plot) + 
+  geom_sf(aes(fill = `50%`), col = NA) +
+  facet_grid(cols = vars(lag)) + theme_bw() + 
+  geom_sf(data = map_plot %>% 
+            group_by(country) %>% 
+            summarize(geometry = st_union(geometry)), 
+          col = "white", fill = NA, lwd = 0.5) + 
+  scale_fill_viridis_c(option = "E") + 
+  theme(axis.text = element_blank(), 
+        axis.ticks = element_blank(), 
+        legend.title = element_blank()) + 
+  ggtitle("A. Relative excess mortality") -> p1
+  
+map_plot %>% 
+  mutate(
+    post_cat = case_when(
+      post_prob < 0.2 ~ "(0.0,0.2)",
+      post_prob >= 0.2 & post_prob <= 0.8 ~ "(0.2, 0.8)",
+      post_prob > 0.8 ~ "(0.8, 1.0)"
+    )
+  ) -> map_plot
+
+ggplot(data = map_plot) + 
+  geom_sf(aes(fill = post_cat), col = NA) +
+  facet_grid(cols = vars(lag)) + theme_bw() + 
+  geom_sf(data = map_plot %>% 
+            group_by(country) %>% 
+            summarize(geometry = st_union(geometry)), 
+          col = "white", fill = NA, lwd = 0.5) + 
+  scale_fill_viridis_d(option = "E") + 
+  theme(axis.text = element_blank(), 
+        axis.ticks = element_blank(), 
+        legend.title = element_blank()) + 
+  ggtitle("B. Posterior probability of positive excess") -> p2
+
+p1/p2
+##
+## I need some sort of posterior here
+
+
+(getRelativeExcess(excess = excess_esp, 
+                   res = res_esp, 
+                   c("date", "NUTSII"), 
                    groupd = TRUE, 
                    Y = c("2025-04-28")) %>% 
     ggplot() + 
@@ -404,16 +520,22 @@ getRelativeExcess <- function(X, Y = NULL, groupd = FALSE){
   xlab("") -> p1
 
 
-(getRelativeExcess(c("date", "NUTSII"), 
-                     groupd = TRUE, 
-                     Y = c("2025-04-28", "2025-04-29", "2025-04-30")) %>% 
+(getRelativeExcess(
+  excess = excess_esp, 
+  res = res_esp, 
+  c("date", "NUTSII"), 
+  groupd = TRUE, 
+  Y = c("2025-04-28", "2025-04-29", "2025-04-30")) %>% 
      ggplot() + 
      geom_hline(yintercept=0, col = "red", lty = 2) + 
      geom_point(aes(x=NUTSII, y = `50%`)) + 
      geom_errorbar(aes(x=NUTSII, ymin = `2.5%`, ymax = `97.5%`), width = 0.2)) + 
   theme_bw() + ylab("") +  xlab("") + ggtitle("B. Cummulative effect 2 days after") -> p2
 
-(getRelativeExcess(c("NUTSII")) %>% 
+(getRelativeExcess(
+  excess = excess_esp, 
+  res = res_esp, 
+  c("NUTSII")) %>% 
      ggplot() + 
      geom_hline(yintercept=0, col = "red", lty = 2) + 
      geom_point(aes(x=NUTSII, y = `50%`)) + 
