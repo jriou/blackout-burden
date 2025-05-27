@@ -48,24 +48,23 @@ getSums <- function(X, res){
   
   res %>% 
     dplyr::group_by_at(X) %>% 
-    summarise(across(c('deaths', paste0("V", 1:200)), list(sum))) -> res_tot 
+    summarise(across(c('deaths', paste0("V", 1:1000)), list(sum))) -> res_tot 
   
-  test <- res_tot[,paste0("V", 1:200, "_1")] %>% 
+  test <- res_tot[,paste0("V", 1:1000, "_1")] %>% 
     apply(., 1, function(x) quantile(x, 
                                      probs = c(0.025, 0.05, 0.10, 0.2, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.975)))
   
   df_plot <- test %>% t() %>% as.data.frame()
-  df_plot <- cbind(res_tot %>% dplyr::select(-(paste0("V", 1:200, "_1"))), df_plot)
+  df_plot <- cbind(res_tot %>% dplyr::select(-(paste0("V", 1:1000, "_1"))), df_plot)
   
   return(df_plot)
 }
 
 
 N <- length(res_form_esp)
-sapply(1:N, function(Z) lapply(res_form_esp, ExtractResults)) -> res_esp
-do.call(rbind, res_esp) -> res_esp
-sapply(1:N, function(Z) lapply(res_form_prt, ExtractResults)) -> res_prt
-do.call(rbind, res_prt) -> res_prt
+lapply(res_form_esp, ExtractResults) %>% do.call(rbind, .) -> res_esp
+lapply(res_form_prt, ExtractResults) %>% do.call(rbind, .) -> res_prt
+
 
 fig1 <- function(res, title){
   ggplot(
