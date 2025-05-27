@@ -116,7 +116,7 @@ if(cntr == "PRT"){
 
 if(cntr == "ESP"){
   
-  # dat.grid <- readRDS(paste0("output/OutcomeData_", cntr, ".rds"))
+  dat.grid <- readRDS(paste0("output/OutcomeData_", cntr, ".rds"))
   pop_daily <- readRDS(paste0("output/pop_nutsii_lp_", cntr, ".rds"))
   
   # bring temperature
@@ -170,8 +170,76 @@ if(cntr == "ESP"){
   pop_daily$hol.y <-ifelse(is.na(pop_daily$hol.y), 0, 1)
   pop_daily$hol <- pop_daily$hol.x + pop_daily$hol.y
   pop_daily$hol.x <- pop_daily$hol.y <- NULL
-
-  }
+  pop_daily$counties <- NULL
+  
+  # and bring deaths:
+  head(dat.grid)
+  head(pop_daily)
+  
+  pop_daily <- left_join(
+    pop_daily, 
+    dat.grid, 
+    by = c("date" = "date", 
+           "age" = "ageg", 
+           "sex" = "sex", 
+           "nutsii_name" = "nutsii_name")
+  )
+  summary(pop_daily)
+  
+  pop_daily$pop[pop_daily$date %in% "2010-01-10"] %>% sum()
+  dat.fin <- pop_daily
+  
+  # define ids for temporal and spatial trends
+  dat.fin$month <- lubridate::month(dat.fin$date)
+  dat.fin$yweek <- lubridate::week(dat.fin$date)
+  dat.fin$yday <- lubridate::yday(dat.fin$date)
+  dat.fin$day <- as.numeric(as.factor(dat.fin$date))
+  dat.fin$week <- INLA::inla.group(dat.fin$day, 
+                                   n = max(dat.fin$day)/7 %>% round(digits = 0),
+                                   idx.only =  TRUE)
+  dat.fin$id.space <- as.numeric(as.factor(dat.fin$nutsii_name))
+  
+  # and bring also covid_19 deaths
+  covid_deaths <- readRDS("output/COVID_DEATHS.rds")
+  dat.fin$isoweek <- substr(ISOweek::date2ISOweek(dat.fin$date),1,8)
+  
+  covid_deaths %>% 
+    dplyr::filter(country %in% "Spain") %>% 
+    dplyr::select(isoweek, OWID_covid_deaths) %>% 
+    left_join(dat.fin, .) -> dat.fin
+  
+  summary(dat.fin)
+  dat.fin$OWID_covid_deaths[is.na(dat.fin$OWID_covid_deaths)] <- 0
+  dat.fin$year <- lubridate::year(dat.fin$date)
+  
+  dat.fin %>% 
+    dplyr::rename(
+      date = date, 
+      NUTSII = nutsii_name, 
+      age = age, 
+      sex = sex, 
+      pop = pop, 
+      deaths = deaths, 
+      temperature_lag0 = variable, 
+      hol = hol, 
+      year = year
+    ) %>% 
+    dplyr::select(
+      date, NUTSII, age, sex, pop, deaths, temperature_lag0, hol, year, month, yweek, yday, day, week, 
+      id.space, isoweek, OWID_covid_deaths
+    ) -> dat.fin
+  
+  # i need to make sure the categories are consistent with the other file
+  dat.fin$age <- as.character(dat.fin$age)
+  dat.fin$age[dat.fin$age %in% "65<"] <- "0-64"
+  dat.fin$age[dat.fin$age %in% "65-84"] <- "65-84" 
+  dat.fin$age[dat.fin$age %in% ">84"] <- "85+"
+    
+  dat.fin$sex <- as.character(dat.fin$sex)
+  dat.fin$sex <- ifelse(dat.fin$sex == "Females", "female", "male")
+    
+  saveRDS(dat.fin, file = paste0("output/FinalData_", cntr, ".rds"))
+}
 
 
 rm(list = ls())

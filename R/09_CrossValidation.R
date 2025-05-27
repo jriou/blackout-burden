@@ -16,8 +16,8 @@ setwd(path)
 
 dlnm = TRUE
 
-cntr <- "PRT"
-# cntr <- "ESP"
+# cntr <- "PRT"
+cntr <- "ESP"
 
 dat <- readRDS(paste0("output/FinalData_", cntr, ".rds"))
 dat <- dat[!is.na(dat$deaths),]
@@ -53,6 +53,7 @@ if(dlnm == TRUE){
   
   ## apply crossbasis for lag0 temperature time series from each location
   ## Note that your data is by age and sex, thus you need to account for this
+
   dat_noagesex <- 
     dat %>% dplyr::filter(age %in% "85+", sex %in% "female")
   
@@ -297,7 +298,7 @@ clusterExport(cl_inla, c("RunINLA", "k", "form_1", "form_2", "form_3",
 t_0 <- Sys.time()
 outpar <- parLapply(cl = cl_inla, k, par.fun)
 t_1 <- Sys.time()
-t_1 - t_0 # 30 minutes
+t_1 - t_0 # 30 minutes for Portugal, 1 hours for Spain
 
 ##
 ## needs some post processing

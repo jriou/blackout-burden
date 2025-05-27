@@ -15,8 +15,8 @@ setwd(path)
 
 dlnm = TRUE
 
-cntr <- "PRT"
-# cntr <- "ESP"
+# cntr <- "PRT"
+cntr <- "ESP"
 
 dat <- readRDS(paste0("output/FinalData_", cntr, ".rds"))
 dat <- dat[!is.na(dat$deaths),]
@@ -200,7 +200,7 @@ if(dlnm == TRUE){
 t_0 <- Sys.time()
 res_form <- lapply(dat_cv_list, RunINLA, form = form)
 t_1 <- Sys.time()
-t_1 - t_0 # 5 minutes
+t_1 - t_0 # 5 minutes for Portugal, 10 minutes for Spain.
 
 
 saveRDS(res_form, file = paste0("output/RES_MAIN_", cntr, dlnm_nam, ".rds"))
