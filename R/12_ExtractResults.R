@@ -400,7 +400,7 @@ lag0_map <- getRelativeExcess(excess = excess_esp,
                               groupd = TRUE, 
                               Y = c("2025-04-28"))
 
-lag0_map$lag <- "lag0"
+lag0_map$lag <- "Lag0"
 
 lag0_2_map <- getRelativeExcess(excess = excess_esp, 
                               res = res_esp, 
@@ -408,14 +408,14 @@ lag0_2_map <- getRelativeExcess(excess = excess_esp,
                               groupd = TRUE, 
                               Y = c("2025-04-28", "2025-04-29", "2025-04-30"))
 
-lag0_2_map$lag <- "lag0-2"
+lag0_2_map$lag <- "Lag0-2"
 
 
 lag0_6_map <- getRelativeExcess(excess = excess_esp, 
                                 res = res_esp, 
                                 c("NUTSII"))
 
-lag0_6_map$lag <- "lag0-6"
+lag0_6_map$lag <- "Lag0-6"
 
 map_spain <- rbind(lag0_map, lag0_2_map, lag0_6_map)
 map_spain$country <- "Spain"
@@ -430,7 +430,7 @@ lag0_map <- getRelativeExcess(excess = excess_prt,
                               groupd = TRUE, 
                               Y = c("2025-04-28"))
 
-lag0_map$lag <- "lag0"
+lag0_map$lag <- "Lag0"
 
 lag0_2_map <- getRelativeExcess(excess = excess_prt, 
                                 res = res_prt, 
@@ -438,14 +438,14 @@ lag0_2_map <- getRelativeExcess(excess = excess_prt,
                                 groupd = TRUE, 
                                 Y = c("2025-04-28", "2025-04-29", "2025-04-30"))
 
-lag0_2_map$lag <- "lag0-2"
+lag0_2_map$lag <- "Lag0-2"
 
 
 lag0_6_map <- getRelativeExcess(excess = excess_prt, 
                                 res = res_prt, 
                                 c("NUTSII"))
 
-lag0_6_map$lag <- "lag0-6"
+lag0_6_map$lag <- "Lag0-6"
 
 map_port <- rbind(lag0_map, lag0_2_map, lag0_6_map)
 map_port$country <- "Portugal"
@@ -462,30 +462,47 @@ shp <- rbind(shp_esp,
              shp_prt %>% 
                select(NAME_LATN = n2_L_20)) 
 plot(shp$geometry)
+
 shp$NAME_LATN[shp$NAME_LATN %in% "Centro (PT)"] <- "Centro"
 # nice and bring to the other file
 map_plot <- left_join(shp, map_plot, by = c("NAME_LATN" = "NUTSII"))
 
 map_plot <- map_plot[complete.cases(map_plot$country),]
+# lim <- map_plot$`50%` %>% max() %>% round(digits = 2)
+map_plot %>% 
+  mutate(
+    med_cat = 
+      case_when(
+        `50%` < -0.05 ~ "-5%<",
+        `50%` >= -0.05 & `50%` < -0.01 ~ "[-5%, 1%)",
+        `50%` >= -0.01 & `50%` < 0.01 ~ "[-1%, 1%)",
+        `50%` >= 0.01 & `50%` < 0.05 ~ "[1%, 5%)",
+        `50%` >= 0.05 ~ ">=5%"
+      ) %>% factor(levels = c("-5%<", "[-5%, 1%)", "[-1%, 1%)", "[1%, 5%)", ">=5%"))
+  ) -> map_plot
+
 ggplot(data = map_plot) + 
-  geom_sf(aes(fill = `50%`), col = NA) +
+  geom_sf(aes(fill = med_cat), col = NA) +
   facet_grid(cols = vars(lag)) + theme_bw() + 
   geom_sf(data = map_plot %>% 
             group_by(country) %>% 
             summarize(geometry = st_union(geometry)), 
-          col = "white", fill = NA, lwd = 0.5) + 
-  scale_fill_viridis_c(option = "E") + 
+          col = "black", fill = NA, lwd = 0.7) + 
+  # scale_fill_viridis_c(option = "E", limits = c(-lim, lim), alpha = 0.9) +
+  scale_fill_viridis_d(option = "E", alpha = 0.9) +
   theme(axis.text = element_blank(), 
         axis.ticks = element_blank(), 
         legend.title = element_blank()) + 
   ggtitle("A. Relative excess mortality") -> p1
-  
+
+
+
 map_plot %>% 
   mutate(
     post_cat = case_when(
-      post_prob < 0.2 ~ "(0.0,0.2)",
-      post_prob >= 0.2 & post_prob <= 0.8 ~ "(0.2, 0.8)",
-      post_prob > 0.8 ~ "(0.8, 1.0)"
+      post_prob < 0.2 ~ "[0.0, 0.2)",
+      post_prob >= 0.2 & post_prob < 0.8 ~ "[0.2, 0.8)",
+      post_prob > 0.8 ~ "[0.8, 1.0]"
     )
   ) -> map_plot
 
@@ -495,7 +512,7 @@ ggplot(data = map_plot) +
   geom_sf(data = map_plot %>% 
             group_by(country) %>% 
             summarize(geometry = st_union(geometry)), 
-          col = "white", fill = NA, lwd = 0.5) + 
+          col = "black", fill = NA, lwd = 0.7) + 
   scale_fill_viridis_d(option = "E") + 
   theme(axis.text = element_blank(), 
         axis.ticks = element_blank(), 
@@ -503,6 +520,131 @@ ggplot(data = map_plot) +
   ggtitle("B. Posterior probability of positive excess") -> p2
 
 p1/p2
+ggsave(filename = "output/fig3.png", dpi = 300, width = 8.5, height = 5)
+
+
+
+
+
+
+##
+## Get a relative excess table for the supplement
+
+
+excess_list <- list(excess_prt, excess_esp)
+res_list <- list(res_prt, res_esp)
+tab_list <- list()
+
+for(i in 1:2){
+  purrr::reduce(lapply(list(
+    c("2025-04-28"),
+    c("2025-04-28", "2025-04-29", "2025-04-30"),
+    c("2025-04-28", "2025-04-29", "2025-04-30", "2025-05-01", "2025-05-02", "2025-05-03", "2025-05-04")
+  ), function(Y) getRelativeExcess(Y=Y, groupd = TRUE, excess = excess_list[[i]], res = res_list[[i]], X = c("date", "age", "sex"))), 
+  dplyr::left_join, by = c("age", "sex")) -> 
+    tab11
+  
+  purrr::reduce(lapply(list(
+    c("2025-04-28"),
+    c("2025-04-28", "2025-04-29", "2025-04-30"),
+    c("2025-04-28", "2025-04-29", "2025-04-30", "2025-05-01", "2025-05-02", "2025-05-03", "2025-05-04")
+  ), function(Y) getRelativeExcess(Y=Y, groupd = TRUE, excess = excess_list[[i]], res = res_list[[i]], X = c("date", "age"))), 
+  dplyr::left_join, by = c("age")) %>% mutate(sex="Total") -> 
+    tab12
+  
+  purrr::reduce(lapply(list(
+    c("2025-04-28"),
+    c("2025-04-28", "2025-04-29", "2025-04-30"),
+    c("2025-04-28", "2025-04-29", "2025-04-30", "2025-05-01", "2025-05-02", "2025-05-03", "2025-05-04")
+  ), function(Y) getRelativeExcess(Y=Y, groupd = TRUE, excess = excess_list[[i]], res = res_list[[i]], X = c("date", "sex"))), 
+  dplyr::left_join, by = c("sex")) %>% mutate(age="Total") -> 
+    tab13
+  
+  purrr::reduce(lapply(list(
+    c("2025-04-28"),
+    c("2025-04-28", "2025-04-29", "2025-04-30"),
+    c("2025-04-28", "2025-04-29", "2025-04-30", "2025-05-01", "2025-05-02", "2025-05-03", "2025-05-04")
+  ), function(Y) getRelativeExcess(Y=Y, groupd = TRUE, excess = excess_list[[i]], res = res_list[[i]], X = c("date"))), 
+  cbind) -> 
+    tab14
+  
+  names(tab14) <- colnames(tab11)[-c(1:2)]
+  tab14 <- tab14 %>% as_tibble() %>% mutate(age="Total", sex = "Total")
+  # fix colnames
+  
+  tab11 %>% 
+    dplyr::rename(
+      post_prob.x = `...6.x`, 
+      post_prob.y = `...6.y`, 
+      post_prob = `...6`
+    ) -> tab11
+  
+  tab14 %>% 
+    dplyr::rename(
+      post_prob.x = `...6.x`, 
+      post_prob.y = `...6.y`, 
+      post_prob = `...6`
+    ) -> tab14
+  
+  rbind(
+    tab11, 
+    tab12[,colnames(tab11)], 
+    tab13[,colnames(tab11)], 
+    tab14[,colnames(tab11)]
+  ) -> tab1
+
+  
+  tab1$age[tab1$age %in% "0-64"] <- "65<"
+  tab1$age[tab1$age %in% "85+"] <- ">84"
+  
+  tab1$sex[tab1$sex %in% "female"] <- "Females"
+  tab1$sex[tab1$sex %in% "male"] <- "Males"
+  tab1$sex <- factor(tab1$sex, levels = c("Males", "Females", "Total"))
+  tab1$age <- factor(tab1$age, levels = c("65<", "65-84", ">84", "Total"))
+  
+  tab1 <- tab1 %>% arrange(age, sex)
+  
+  tab_list[[i]] <- tab1
+}
+
+
+rbind(
+  tab_list[[1]],
+  tab_list[[2]]
+) -> tab1
+
+tab1[,3:ncol(tab1)] <- tab1[,3:ncol(tab1)]*100
+
+# and get the 95%CrI
+paste0(round(tab1$`50%.x`, digits = 2) %>% sprintf("%.2f", .), 
+       " (", round(tab1$`2.5%.x`, digits = 2) %>% sprintf("%.2f", .), 
+       ", ", round(tab1$`97.5%.x`, digits = 2) %>% sprintf("%.2f", .), ")")
+
+data.frame(
+  Age = tab1$age, 
+  Sex = tab1$sex, 
+  Lag0 = paste0(round(tab1$`50%.x`, digits = 2) %>% sprintf("%.2f", .), "%",
+                " (", round(tab1$`2.5%.x`, digits = 2) %>% sprintf("%.2f", .), "%",
+                ", ", round(tab1$`97.5%.x`, digits = 2) %>% sprintf("%.2f", .), "%", ")"), 
+  Probability = (tab1$post_prob.x/100) %>% round(digits = 2) %>% format(., nsmall = 2),
+  Lag0 = paste0(round(tab1$`50%.y`, digits = 2) %>% sprintf("%.2f", .), "%",
+                " (", round(tab1$`2.5%.y`, digits = 2) %>% sprintf("%.2f", .), "%",
+                ", ", round(tab1$`97.5%.y`, digits = 2) %>% sprintf("%.2f", .), "%",")"), 
+  Probability = (tab1$post_prob.y/100) %>% round(digits = 2) %>% format(., nsmall = 2),
+  Lag0 = paste0(round(tab1$`50%`, digits = 2) %>% sprintf("%.2f", .), "%",
+                " (", round(tab1$`2.5%`, digits = 2) %>% sprintf("%.2f", .), "%",
+                ", ", round(tab1$`97.5%`, digits = 2) %>% sprintf("%.2f", .), "%", ")"), 
+  Probability = (tab1$post_prob/100) %>% round(digits = 2) %>% format(., nsmall = 2)
+) -> tab1
+print(xtable(tab1, digits=2), include.rownames=FALSE)
+
+
+?round
+
+(tab1$post_prob.x / 100) %>%
+  round(2) %>%
+  format(nsmall = 2) %>%
+  paste0("%")
 ##
 ## I need some sort of posterior here
 
