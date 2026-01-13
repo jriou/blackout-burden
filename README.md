@@ -7,3 +7,6 @@
 - Estimates excess deaths for the blackout week **28 Apr–4 May 2025**, including lag windows (lag0, lag0–2, lag0–6).
 - Produces the main tables/figures (overall + by age, sex, and NUTS2 region). 
 
+## Data availability
+- Data from Portugal was obtained from the National Statistics Institute.
+- Data from Spain cannot be shared here but can be obtained from the National Centre of Epidemiology at the Carlos III Health Institute, the Daily Monitoring Mortality System, the National Statistics Institute, and the Ministry of Justice in Spain.
