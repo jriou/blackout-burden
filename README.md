@@ -8,5 +8,4 @@
 - Produces the main tables/figures (overall + by age, sex, and NUTS2 region). 
 
 ## Data availability
-- Data from Portugal was obtained from the National Statistics Institute.
-- Data from Spain cannot be shared here but can be obtained from the National Centre of Epidemiology at the Carlos III Health Institute, the Daily Monitoring Mortality System, the National Statistics Institute, and the Ministry of Justice in Spain.
+Population data in Spain can be retrieved from the Instituto Nacional de Estadistica in Spain (https://www.ine.es/jaxiT3/Tabla.htm?t=56945&L=0). Mortality data in Spain can be retrieved after request from the National Centre of Epidemiology at the Carlos III Health Institute. Mortality and population data in Portugal can be retrieved from the Instituto Nacional de Estadistica in Portugal (https://www.ine.pt/).
