@@ -8,15 +8,15 @@
 #-------------------------------------------------------------------------------
 
 # wd
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+path <- "."
 setwd(path)
 
 # install.packages("giscoR")
 library(giscoR)
 library(sf)
 
-cntr <- "ESP"
-# cntr <- "PRT"
+# cntr <- "ESP"
+cntr <- "PRT"
 
 if(cntr <- "PRT"){
   portugal_nuts3_2016 <- gisco_get_nuts(year = 2016, nuts_level = 3, country = "PT", resolution = "03")

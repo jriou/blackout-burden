@@ -18,11 +18,11 @@ cntr <- "PRT"
 cntr <- "ESP"
 
 # wd
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+path <- "."
 setwd(path)
 
 if(cntr == "PRT"){
-  dat <- read_excel("data/PED-724404370_250502.xlsx")
+  dat <- read_excel("data/portugal/PED-724404370_250502.xlsx")
   colnames(dat) <- dat[2,]
   dat <- dat[-c(1:2),]
   dat$date <- paste(dat$Ano,  dat$`Mes óbito`, dat$`Dia óbito`, sep = "-")
@@ -112,7 +112,7 @@ if(cntr == "PRT"){
   # Área Metropolitana de Lisboa <- Grande Lisboa
   # Área Metropolitana de Lisboa <- Península de Setúbal
   # The third is a change in one name
-  dat_new <- readRDS("output/deaths21_25.rds")
+  dat_new <- readRDS("data/portugal/deaths21_25.rds")
   dat_new$nuts2_name %>% table()
   # dat$NUTSII %>% table()
   # dat$NUTSII_name %>% table()
@@ -188,7 +188,7 @@ if(cntr == "PRT"){
 
 if(cntr == "ESP"){
   
-  dat <- read.table("data/Spain/Deaths.txt", sep = " ", header = TRUE)
+  dat <- read.table("data/Spain/Deaths.txt", sep = " ", header = TRUE) # Available upon request, not on repo
   head(dat)
   
   # prov: nut3 (we send excel with the name of each nut3).

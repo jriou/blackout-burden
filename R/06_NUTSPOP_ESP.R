@@ -14,7 +14,7 @@ library(tidyr)
 library(stringr)
 library(giscoR)
 
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden"
+path <- "."
 setwd(path)
 
 pop <- read.csv("data/Spain/pop.csv", sep = ";", header = TRUE)

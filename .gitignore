@@ -1,5 +1,5 @@
 # Data files
-/savepoints/*
+/outputs/*
 
 # History files
 .Rhistory

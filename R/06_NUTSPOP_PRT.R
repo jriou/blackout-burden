@@ -21,7 +21,7 @@ sum(!portugal_nuts3_2013$NAME_LATN %in% portugal_nuts3_2016$NAME_LATN)
 # nice nutsiii 2013 and nutsiii 2016 are the same
 
 # set path
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden"
+path <- "."
 setwd(path)
 
 list.files("data/")[list.files("data/") %>% startsWith(., "pop")] %>% 

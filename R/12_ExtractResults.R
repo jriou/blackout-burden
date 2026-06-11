@@ -13,7 +13,7 @@ library(xtable)
 library(sf)
 
 # set path
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+path <- "."
 setwd(path)
 
 # cntr <- "PRT"
@@ -149,8 +149,8 @@ fig1 <- function(res, title){
   return(list(p1, p2, p3, p4))
 }
 
-fig1_esp <- fig1(res=res_esp, title = "B. Spain")
-fig1_prt <- fig1(res=res_prt, title = "A. Portugal")
+fig1_esp <- fig1(res=res_esp, title = "b. Spain")
+fig1_prt <- fig1(res=res_prt, title = "a. Portugal")
 
 
 ((((fig1_prt[[1]])|(fig1_prt[[3]])) + plot_layout(widths = c(1, 2)))/
@@ -493,7 +493,7 @@ ggplot(data = map_plot) +
   theme(axis.text = element_blank(), 
         axis.ticks = element_blank(), 
         legend.title = element_blank()) + 
-  ggtitle("A. Relative excess mortality") -> p1
+  ggtitle("a. Relative excess mortality") -> p1
 
 
 
@@ -517,7 +517,7 @@ ggplot(data = map_plot) +
   theme(axis.text = element_blank(), 
         axis.ticks = element_blank(), 
         legend.title = element_blank()) + 
-  ggtitle("B. Posterior probability of positive excess") -> p2
+  ggtitle("b. Posterior probability of positive excess") -> p2
 
 p1/p2
 ggsave(filename = "output/fig3.png", dpi = 300, width = 8.5, height = 5)

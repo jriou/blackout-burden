@@ -10,7 +10,7 @@
 
 # set your working directory
 # wd
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+path <- "."
 setwd(path)
 
 # create a folder Output to store the files
@@ -20,7 +20,7 @@ library(tidyverse)
 library(ecmwfr)
 library(parallel)
 
-# myemail <- "g.konstantinoudis@imperial.ac.uk"
+# myemail <- "your.email"
 # cds.key <- wf_get_key(user = myemail)
 
 # Set up the API and UID

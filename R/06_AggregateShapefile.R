@@ -11,7 +11,7 @@ library(FNN)
 library(patchwork)
 
 # wd
-path <- "C:/Users/gkonstan/OneDrive - Imperial College London/ICRF Imperial/Projects/blackout-burden/"
+path <- "."
 setwd(path)
 
 cntr <- "ESP"
